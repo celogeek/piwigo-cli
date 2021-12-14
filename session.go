@@ -50,6 +50,12 @@ func (c *LoginCommand) Execute(args []string) error {
 	return nil
 }
 
+type StatusResponse struct {
+	User    string `json:"username"`
+	Role    string `json:"status"`
+	Version string `json:"version"`
+}
+
 func (c *StatusCommand) Execute(args []string) error {
 	fmt.Println("Status:")
 
@@ -58,10 +64,14 @@ func (c *StatusCommand) Execute(args []string) error {
 		return err
 	}
 
-	var resp map[string]interface{}
-	Piwigo.Post("pwg.session.getStatus", &url.Values{}, &resp)
-	piwigo.DumpResponse(resp)
+	resp := &StatusResponse{}
 
+	if err := Piwigo.Post("pwg.session.getStatus", &url.Values{}, &resp); err != nil {
+		return err
+	}
+	fmt.Printf("  Version: %s\n", resp.Version)
+	fmt.Printf("  User   : %s\n", resp.User)
+	fmt.Printf("  Role   : %s\n", resp.Role)
 	return nil
 }
 
