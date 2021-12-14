@@ -1,11 +1,11 @@
-package main
+package piwigo
 
 import (
 	"encoding/json"
 	"fmt"
 )
 
-func dumpResponse(v interface{}) (err error) {
+func DumpResponse(v interface{}) (err error) {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err == nil {
 		fmt.Println(string(b))

@@ -60,7 +60,7 @@ func (c *StatusCommand) Execute(args []string) error {
 
 	var resp map[string]interface{}
 	Piwigo.Post("pwg.session.getStatus", &url.Values{}, &resp)
-	dumpResponse(resp)
+	piwigo.DumpResponse(resp)
 
 	return nil
 }
