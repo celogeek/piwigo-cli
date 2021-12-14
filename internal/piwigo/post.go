@@ -3,9 +3,9 @@ package piwigo
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 func (p *Piwigo) BuildUrl(method string) (string, error) {
@@ -22,29 +22,34 @@ func (p *Piwigo) BuildUrl(method string) (string, error) {
 	return Url.String(), nil
 }
 
-func (p *Piwigo) Post(method string, req *url.Values, resp interface{}) error {
+func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 	Url, err := p.BuildUrl(method)
 	if err != nil {
 		return err
 	}
 
-	r, err := http.PostForm(Url, *req)
+	req, err := http.NewRequest("POST", Url, strings.NewReader(form.Encode()))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if p.Token != "" {
+		req.AddCookie(&http.Cookie{Name: "pwg_id", Value: p.Token})
+	}
+
+	r, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
 
 	defer r.Body.Close()
 
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return err
-	}
-
 	Result := PiwigoResult{
 		Result: resp,
 	}
 
-	err = json.Unmarshal(b, &Result)
+	err = json.NewDecoder(r.Body).Decode(&Result)
 	if err != nil {
 		return err
 	}
