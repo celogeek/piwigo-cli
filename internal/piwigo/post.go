@@ -8,58 +8,45 @@ import (
 	"net/url"
 )
 
-type Piwigo struct {
-	Url    string
-	Token  string
-	Method string
-}
+func (p *Piwigo) BuildUrl(method string) (string, error) {
 
-type PiwigoResult struct {
-	Stat       string      `json:"stat"`
-	Err        int         `json:"err"`
-	ErrMessage string      `json:"message"`
-	Result     interface{} `json:"result"`
-}
-
-func (p *Piwigo) BuildUrl() (string, error) {
-
-	Url, Err := url.Parse(p.Url)
-	if Err != nil {
-		return "", Err
+	Url, err := url.Parse(p.Url)
+	if err != nil {
+		return "", err
 	}
 	Url.Path += "/ws.php"
 	q := Url.Query()
 	q.Set("format", "json")
-	q.Set("method", p.Method)
+	q.Set("method", method)
 	Url.RawQuery = q.Encode()
 	return Url.String(), nil
 }
 
-func (p *Piwigo) Post(req *url.Values, resp interface{}) error {
-	Url, Err := p.BuildUrl()
-	if Err != nil {
-		return Err
+func (p *Piwigo) Post(method string, req *url.Values, resp interface{}) error {
+	Url, err := p.BuildUrl(method)
+	if err != nil {
+		return err
 	}
 
-	r, Err := http.PostForm(Url, *req)
-	if Err != nil {
-		return Err
+	r, err := http.PostForm(Url, *req)
+	if err != nil {
+		return err
 	}
 
 	defer r.Body.Close()
 
-	b, Err := ioutil.ReadAll(r.Body)
-	if Err != nil {
-		return Err
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return err
 	}
 
 	Result := PiwigoResult{
 		Result: resp,
 	}
 
-	Err = json.Unmarshal(b, &Result)
-	if Err != nil {
-		return Err
+	err = json.Unmarshal(b, &Result)
+	if err != nil {
+		return err
 	}
 
 	if Result.Stat != "ok" {

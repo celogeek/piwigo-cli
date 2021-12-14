@@ -13,33 +13,43 @@ type LoginCommand struct {
 	Password string `short:"p" long:"password" description:"Password"`
 }
 
-var loginCommand LoginCommand
+type StatusCommand struct {
+}
+
+type SessionGroup struct {
+	Login  LoginCommand  `command:"login" description:"Initialize a connection to a piwigo instance"`
+	Status StatusCommand `command:"status" description:"Get the status of your session"`
+}
+
+var sessionGroup SessionGroup
 
 func (c *LoginCommand) Execute(args []string) error {
 	fmt.Printf("Login on %s...\n", c.Url)
 
 	Piwigo := piwigo.Piwigo{
-		Url:    c.Url,
-		Method: "pwg.session.login",
+		Url: c.Url,
 	}
 
 	result := false
 
-	if Err := Piwigo.Post(&url.Values{
+	err := Piwigo.Post("pwg.session.login", &url.Values{
 		"username": []string{c.Login},
 		"password": []string{c.Password},
-	}, &result); Err != nil {
-		return Err
+	}, &result)
+	if err != nil {
+		return err
 	}
 
-	fmt.Printf("Token: %s\n", Piwigo.Token)
+	err = Piwigo.SaveConfig()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Login succeed!")
 
 	return nil
 }
 
 func init() {
-	parser.AddCommand("login",
-		"Initialize a connection to a piwigo instance",
-		"Initialize a connection to a piwigo instance",
-		&loginCommand)
+	parser.AddCommand("session", "Session management", "", &sessionGroup)
 }
