@@ -50,6 +50,21 @@ func (c *LoginCommand) Execute(args []string) error {
 	return nil
 }
 
+func (c *StatusCommand) Execute(args []string) error {
+	fmt.Println("Status:")
+
+	Piwigo := piwigo.Piwigo{}
+	if err := Piwigo.LoadConfig(); err != nil {
+		return err
+	}
+
+	var resp map[string]interface{}
+	Piwigo.Post("pwg.session.getStatus", &url.Values{}, &resp)
+	dumpResponse(resp)
+
+	return nil
+}
+
 func init() {
 	parser.AddCommand("session", "Session management", "", &sessionGroup)
 }

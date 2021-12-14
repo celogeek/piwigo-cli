@@ -2,14 +2,15 @@ package piwigo
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"os"
+	"strings"
 )
 
 func (p *Piwigo) ConfigPath() (configPath string, err error) {
 	configDir, err := os.UserConfigDir()
 	if err == nil {
-		configPath = fmt.Sprintf("%s/piwigo-cli", configDir)
+		configPath = strings.Join([]string{configDir, "piwigo-cli"}, "/")
 	}
 	return
 }
@@ -30,7 +31,7 @@ func (p *Piwigo) SaveConfig() (err error) {
 		return
 	}
 
-	configFile := fmt.Sprintf("%s/config.json", configPath)
+	configFile := strings.Join([]string{configPath, "config.json"}, "/")
 
 	b, err := json.MarshalIndent(p, "", "  ")
 	if err != nil {
@@ -47,14 +48,19 @@ func (p *Piwigo) LoadConfig() (err error) {
 		return
 	}
 
-	configFile := fmt.Sprintf("%s/config.json", configPath)
+	configFile := strings.Join([]string{configPath, "config.json"}, "/")
 	b, err := os.ReadFile(configFile)
-	if os.IsNotExist(err) {
-		err = nil
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = errors.New("missing configuration file")
+		}
 		return
 	}
-	if err != nil {
-		err = json.Unmarshal(b, p)
+
+	err = json.Unmarshal(b, &p)
+	if p.Url == "" || p.Token == "" {
+		err = errors.New("missing configuration url or token")
 	}
+
 	return
 }
