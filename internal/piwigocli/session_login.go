@@ -8,21 +8,21 @@ import (
 )
 
 type LoginCommand struct {
-	Url      string `short:"u" long:"url" description:"Url of the instance"`
-	Login    string `short:"l" long:"login" description:"Login"`
-	Password string `short:"p" long:"password" description:"Password"`
+	Url      string `short:"u" long:"url" description:"Url of the instance" required:"true"`
+	Login    string `short:"l" long:"login" description:"Login" required:"true"`
+	Password string `short:"p" long:"password" description:"Password" required:"true"`
 }
 
 func (c *LoginCommand) Execute(args []string) error {
 	fmt.Printf("Login on %s...\n", c.Url)
 
-	Piwigo := piwigo.Piwigo{
+	p := piwigo.Piwigo{
 		Url: c.Url,
 	}
 
 	result := false
 
-	err := Piwigo.Post("pwg.session.login", &url.Values{
+	err := p.Post("pwg.session.login", &url.Values{
 		"username": []string{c.Login},
 		"password": []string{c.Password},
 	}, &result)
@@ -30,7 +30,7 @@ func (c *LoginCommand) Execute(args []string) error {
 		return err
 	}
 
-	err = Piwigo.SaveConfig()
+	err = p.SaveConfig()
 	if err != nil {
 		return err
 	}

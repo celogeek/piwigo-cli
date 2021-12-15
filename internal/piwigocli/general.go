@@ -1,6 +1,7 @@
 package piwigocli
 
 import (
+	"net/url"
 	"os"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
@@ -29,7 +30,7 @@ func (c *GetInfosCommand) Execute(args []string) error {
 
 	var resp GetInfosResponse
 
-	if err := p.Post("pwg.getInfos", nil, &resp); err != nil {
+	if err := p.Post("pwg.getInfos", &url.Values{}, &resp); err != nil {
 		return err
 	}
 
@@ -48,5 +49,4 @@ func (c *GetInfosCommand) Execute(args []string) error {
 
 func init() {
 	parser.AddCommand("getinfos", "Get general information", "", &getInfosCommand)
-
 }

@@ -6,7 +6,8 @@ import (
 	"github.com/jessevdk/go-flags"
 )
 
-type Options struct{}
+type Options struct {
+}
 
 var options Options
 

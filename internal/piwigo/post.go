@@ -1,10 +1,13 @@
 package piwigo
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -54,9 +57,26 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 		Result: resp,
 	}
 
-	err = json.NewDecoder(r.Body).Decode(&Result)
-	if err != nil {
-		return err
+	if os.Getenv("DEBUG") == "1" {
+		newBody := &bytes.Buffer{}
+		tee := io.TeeReader(r.Body, newBody)
+
+		var RawResult map[string]interface{}
+		err = json.NewDecoder(tee).Decode(&RawResult)
+		if err != nil {
+			return err
+		}
+		DumpResponse(RawResult)
+
+		err = json.NewDecoder(newBody).Decode(&Result)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = json.NewDecoder(r.Body).Decode(&Result)
+		if err != nil {
+			return err
+		}
 	}
 
 	if Result.Stat != "ok" {

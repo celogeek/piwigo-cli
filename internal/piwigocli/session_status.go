@@ -17,14 +17,14 @@ type StatusResponse struct {
 }
 
 func (c *StatusCommand) Execute(args []string) error {
-	Piwigo := piwigo.Piwigo{}
-	if err := Piwigo.LoadConfig(); err != nil {
+	p := piwigo.Piwigo{}
+	if err := p.LoadConfig(); err != nil {
 		return err
 	}
 
 	resp := &StatusResponse{}
 
-	if err := Piwigo.Post("pwg.session.getStatus", nil, &resp); err != nil {
+	if err := p.Post("pwg.session.getStatus", nil, &resp); err != nil {
 		return err
 	}
 
