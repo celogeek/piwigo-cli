@@ -34,8 +34,8 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	if p.Token != "" {
-		req.AddCookie(&http.Cookie{Name: "pwg_id", Value: p.Token})
+	if p.Token != nil {
+		req.AddCookie(p.Token)
 	}
 
 	r, err := http.DefaultClient.Do(req)
@@ -60,7 +60,7 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 
 	for _, c := range r.Cookies() {
 		if c.Name == "pwg_id" {
-			p.Token = c.Value
+			p.Token = c
 			break
 		}
 	}
