@@ -1,10 +1,10 @@
 package piwigocli
 
 import (
-	"fmt"
-	"net/url"
+	"os"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
+	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 type StatusCommand struct {
@@ -17,8 +17,6 @@ type StatusResponse struct {
 }
 
 func (c *StatusCommand) Execute(args []string) error {
-	fmt.Println("Status:")
-
 	Piwigo := piwigo.Piwigo{}
 	if err := Piwigo.LoadConfig(); err != nil {
 		return err
@@ -26,11 +24,22 @@ func (c *StatusCommand) Execute(args []string) error {
 
 	resp := &StatusResponse{}
 
-	if err := Piwigo.Post("pwg.session.getStatus", &url.Values{}, &resp); err != nil {
+	if err := Piwigo.Post("pwg.session.getStatus", nil, &resp); err != nil {
 		return err
 	}
-	fmt.Printf("  Version: %s\n", resp.Version)
-	fmt.Printf("  User   : %s\n", resp.User)
-	fmt.Printf("  Role   : %s\n", resp.Role)
+
+	t := table.NewWriter()
+
+	t.AppendHeader(table.Row{"", "Value"})
+	t.AppendRows([]table.Row{
+		{"Version", resp.Version},
+		{"User", resp.User},
+		{"Role", resp.Role},
+	})
+
+	t.SetOutputMirror(os.Stdout)
+	t.SetStyle(table.StyleLight)
+	t.Render()
+
 	return nil
 }

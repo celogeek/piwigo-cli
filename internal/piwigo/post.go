@@ -28,7 +28,12 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", Url, strings.NewReader(form.Encode()))
+	var encodedForm string
+	if form != nil {
+		encodedForm = form.Encode()
+	}
+
+	req, err := http.NewRequest("POST", Url, strings.NewReader(encodedForm))
 	if err != nil {
 		return err
 	}
