@@ -1,4 +1,4 @@
-package main
+package piwigocli
 
 import (
 	"os"
@@ -12,7 +12,7 @@ var options Options
 
 var parser = flags.NewParser(&options, flags.Default)
 
-func main() {
+func Run() {
 	if _, err := parser.Parse(); err != nil {
 		switch flagsErr := err.(type) {
 		case flags.ErrorType:
