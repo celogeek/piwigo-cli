@@ -7,10 +7,10 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
-type StatusCommand struct {
+type SessionStatusCommand struct {
 }
 
-func (c *StatusCommand) Execute(args []string) error {
+func (c *SessionStatusCommand) Execute(args []string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err
