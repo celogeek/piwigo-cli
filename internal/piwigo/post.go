@@ -42,8 +42,8 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	if p.Token != nil {
-		req.AddCookie(p.Token)
+	if p.Token != "" {
+		req.AddCookie(&http.Cookie{Name: "pwg_id", Value: p.Token, HttpOnly: true})
 	}
 
 	r, err := http.DefaultClient.Do(req)
@@ -66,6 +66,7 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 		if err != nil {
 			return err
 		}
+
 		DumpResponse(RawResult)
 
 		err = json.NewDecoder(newBody).Decode(&Result)
@@ -85,7 +86,7 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 
 	for _, c := range r.Cookies() {
 		if c.Name == "pwg_id" {
-			p.Token = c
+			p.Token = c.Value
 			break
 		}
 	}

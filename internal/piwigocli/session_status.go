@@ -10,21 +10,14 @@ import (
 type StatusCommand struct {
 }
 
-type StatusResponse struct {
-	User    string `json:"username"`
-	Role    string `json:"status"`
-	Version string `json:"version"`
-}
-
 func (c *StatusCommand) Execute(args []string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err
 	}
 
-	resp := &StatusResponse{}
-
-	if err := p.Post("pwg.session.getStatus", nil, &resp); err != nil {
+	resp, err := p.Login()
+	if err != nil {
 		return err
 	}
 

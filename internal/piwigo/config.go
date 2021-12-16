@@ -59,7 +59,7 @@ func (p *Piwigo) LoadConfig() (err error) {
 
 	err = json.Unmarshal(b, &p)
 
-	if p.Url == "" || p.Token == nil {
+	if p.Url == "" || p.Username == "" || p.Password == "" {
 		err = errors.New("missing configuration url or token")
 	}
 

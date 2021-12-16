@@ -1,10 +1,10 @@
 package piwigo
 
-import "net/http"
-
 type Piwigo struct {
-	Url   string       `json:"url"`
-	Token *http.Cookie `json:"token"`
+	Url      string `json:"url"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Token    string `json:"token"`
 }
 
 type PiwigoResult struct {

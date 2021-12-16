@@ -2,7 +2,6 @@ package piwigocli
 
 import (
 	"fmt"
-	"net/url"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
 )
@@ -17,20 +16,12 @@ func (c *LoginCommand) Execute(args []string) error {
 	fmt.Printf("Login on %s...\n", c.Url)
 
 	p := piwigo.Piwigo{
-		Url: c.Url,
+		Url:      c.Url,
+		Username: c.Login,
+		Password: c.Password,
 	}
 
-	result := false
-
-	err := p.Post("pwg.session.login", &url.Values{
-		"username": []string{c.Login},
-		"password": []string{c.Password},
-	}, &result)
-	if err != nil {
-		return err
-	}
-
-	err = p.SaveConfig()
+	_, err := p.Login()
 	if err != nil {
 		return err
 	}

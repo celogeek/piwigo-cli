@@ -28,6 +28,11 @@ func (c *GetInfosCommand) Execute(args []string) error {
 		return err
 	}
 
+	_, err := p.Login()
+	if err != nil {
+		return err
+	}
+
 	var resp GetInfosResponse
 
 	if err := p.Post("pwg.getInfos", &url.Values{}, &resp); err != nil {
@@ -35,7 +40,7 @@ func (c *GetInfosCommand) Execute(args []string) error {
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{"", "Value"})
+	t.AppendHeader(table.Row{"Key", "Value"})
 	for _, info := range resp.Infos {
 		t.AppendRow(table.Row{info.Name, info.Value})
 	}
