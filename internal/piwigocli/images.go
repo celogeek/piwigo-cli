@@ -7,5 +7,5 @@ type ImagesGroup struct {
 var imagesGroup ImagesGroup
 
 func init() {
-	parser.AddCommand("images", "Image management", "", &imagesGroup)
+	parser.AddCommand("images", "Images management", "", &imagesGroup)
 }
