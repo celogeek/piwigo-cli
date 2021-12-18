@@ -14,10 +14,10 @@ type CategoriesListCommand struct {
 }
 
 type Category struct {
-	Id          int
-	Name        string
-	FullName    string
-	ImagesCount int
+	Id          int    `json:"id,string"`
+	Name        string `json:"name"`
+	FullName    string `json:"fullname"`
+	ImagesCount int    `json:"nb_images,string"`
 }
 
 func getInt(n interface{}) (r int) {

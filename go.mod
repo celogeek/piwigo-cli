@@ -3,6 +3,7 @@ module github.com/celogeek/piwigo-cli
 go 1.17
 
 require (
+	github.com/grokify/html-strip-tags-go v0.0.1 // indirect
 	github.com/jedib0t/go-pretty/v6 v6.2.4 // indirect
 	github.com/jessevdk/go-flags v1.5.0 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
