@@ -11,11 +11,11 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
-type ReflexionMethodDetailsCommand struct {
+type MethodDetailsCommand struct {
 	MethodName string `short:"m" long:"method-name" description:"Method name to details"`
 }
 
-type ReflexionMethodDetailsParams struct {
+type MethodDetailsParams struct {
 	Name         string      `json:"name"`
 	Optional     bool        `json:"optional"`
 	Type         string      `json:"type"`
@@ -25,19 +25,19 @@ type ReflexionMethodDetailsParams struct {
 	Info         string      `json:"info"`
 }
 
-type ReflexionMethodDetailsOptions struct {
+type MethodDetailsOptions struct {
 	Admin    bool `json:"admin_only"`
 	PostOnly bool `json:"post_only"`
 }
 
-type ReflexionMethodDetailsResult struct {
-	Name        string                         `json:"name"`
-	Description string                         `json:"description"`
-	Options     ReflexionMethodDetailsOptions  `json:"options"`
-	Parameters  []ReflexionMethodDetailsParams `json:"params"`
+type MethodDetailsResult struct {
+	Name        string                `json:"name"`
+	Description string                `json:"description"`
+	Options     MethodDetailsOptions  `json:"options"`
+	Parameters  []MethodDetailsParams `json:"params"`
 }
 
-func (j *ReflexionMethodDetailsOptions) UnmarshalJSON(data []byte) error {
+func (j *MethodDetailsOptions) UnmarshalJSON(data []byte) error {
 	var r interface{}
 	if err := json.Unmarshal(data, &r); err != nil {
 		return err
@@ -51,7 +51,7 @@ func (j *ReflexionMethodDetailsOptions) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *ReflexionMethodDetailsCommand) Execute(args []string) error {
+func (c *MethodDetailsCommand) Execute(args []string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err
@@ -62,7 +62,7 @@ func (c *ReflexionMethodDetailsCommand) Execute(args []string) error {
 		return err
 	}
 
-	var result ReflexionMethodDetailsResult
+	var result MethodDetailsResult
 
 	if err := p.Post("reflection.getMethodDetails", &url.Values{
 		"methodName": []string{c.MethodName},

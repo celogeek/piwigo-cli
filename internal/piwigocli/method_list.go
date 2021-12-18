@@ -7,13 +7,13 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
-type ReflexionMethodListCommand struct{}
+type MethodListCommand struct{}
 
-type ReflexionMethodListResult struct {
+type MethodListResult struct {
 	Methods []string `json:"methods"`
 }
 
-func (c *ReflexionMethodListCommand) Execute(args []string) error {
+func (c *MethodListCommand) Execute(args []string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err
@@ -24,7 +24,7 @@ func (c *ReflexionMethodListCommand) Execute(args []string) error {
 		return err
 	}
 
-	var result ReflexionMethodListResult
+	var result MethodListResult
 
 	if err := p.Post("reflection.getMethodList", nil, &result); err != nil {
 		return err
