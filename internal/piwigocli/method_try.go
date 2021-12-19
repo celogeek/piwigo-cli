@@ -1,14 +1,15 @@
 package piwigocli
 
 import (
+	"errors"
 	"net/url"
+	"strings"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
 )
 
 type MethodTryCommand struct {
-	MethodName   string     `short:"m" long:"method-name" description:"Method name to test"`
-	MethodParams url.Values `short:"p" long:"params" description:"Parameter for the method" env-delim:","`
+	MethodName string `short:"m" long:"method-name" description:"Method name to test"`
 }
 
 func (c *MethodTryCommand) Execute(args []string) error {
@@ -23,13 +24,21 @@ func (c *MethodTryCommand) Execute(args []string) error {
 	}
 
 	var result map[string]interface{}
+	params := &url.Values{}
+	for _, arg := range args {
+		r := strings.SplitN(arg, "=", 2)
+		if len(r) != 2 {
+			return errors.New("args should be key=value")
+		}
+		params.Add(r[0], r[1])
+	}
 
-	if err := p.Post(c.MethodName, &c.MethodParams, &result); err != nil {
+	if err := p.Post(c.MethodName, params, &result); err != nil {
+		piwigo.DumpResponse(params)
 		return err
 	}
 
 	piwigo.DumpResponse(result)
-	piwigo.DumpResponse(c.MethodParams)
-
+	piwigo.DumpResponse(params)
 	return nil
 }
