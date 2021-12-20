@@ -11,6 +11,9 @@ type ImagesDetailsCommand struct {
 }
 
 type GetImagesDetailsResponse struct {
+	Categories    []piwigo.Category `json:"categories"`
+	DateAvailable piwigo.TimeResult `json:"date_available"`
+	DateCreation  piwigo.TimeResult `json:"date_creation"`
 }
 
 func (c *ImagesDetailsCommand) Execute(args []string) error {
@@ -30,5 +33,16 @@ func (c *ImagesDetailsCommand) Execute(args []string) error {
 	}, &resp); err != nil {
 		return err
 	}
+
+	categories, err := p.Categories()
+	if err != nil {
+		return err
+	}
+
+	for i, category := range resp.Categories {
+		resp.Categories[i] = categories[category.Id]
+	}
+
+	piwigo.DumpResponse(resp)
 	return nil
 }

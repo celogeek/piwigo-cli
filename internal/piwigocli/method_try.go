@@ -23,7 +23,7 @@ func (c *MethodTryCommand) Execute(args []string) error {
 		return err
 	}
 
-	var result map[string]interface{}
+	var result interface{}
 	params := &url.Values{}
 	for _, arg := range args {
 		r := strings.SplitN(arg, "=", 2)

@@ -15,6 +15,7 @@ type Category struct {
 	Id          int    `json:"id"`
 	Name        string `json:"name"`
 	ImagesCount int    `json:"nb_images"`
+	Url         string `json:"url"`
 }
 
 type GetCategoriesListResponse struct {
@@ -43,12 +44,13 @@ func (c *CategoriesListCommand) Execute(args []string) error {
 
 	t := table.NewWriter()
 
-	t.AppendHeader(table.Row{"Id", "Name", "Images"})
+	t.AppendHeader(table.Row{"Id", "Name", "Images", "Url"})
 	for _, category := range resp.Categories {
 		t.AppendRow(table.Row{
 			category.Id,
 			category.Name,
 			category.ImagesCount,
+			category.Url,
 		})
 	}
 
