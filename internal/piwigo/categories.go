@@ -1,10 +1,10 @@
 package piwigo
 
-import "net/url"
+import (
+	"net/url"
+)
 
-type Categories struct {
-	Categories []Category `json:"categories"`
-}
+type Categories []Category
 
 type Category struct {
 	Id          int    `json:"id"`
@@ -14,7 +14,9 @@ type Category struct {
 }
 
 func (p *Piwigo) Categories() (map[int]Category, error) {
-	var categories Categories
+	var categories struct {
+		Categories `json:"categories"`
+	}
 
 	err := p.Post("pwg.categories.getList", &url.Values{
 		"fullname":  []string{"true"},
@@ -30,4 +32,12 @@ func (p *Piwigo) Categories() (map[int]Category, error) {
 		result[category.Id] = category
 	}
 	return result, nil
+}
+
+func (c Categories) Names() []string {
+	names := []string{}
+	for _, category := range c {
+		names = append(names, category.Name)
+	}
+	return names
 }
