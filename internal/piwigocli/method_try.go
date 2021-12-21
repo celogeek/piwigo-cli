@@ -1,10 +1,6 @@
 package piwigocli
 
 import (
-	"errors"
-	"net/url"
-	"strings"
-
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
 )
 
@@ -24,13 +20,9 @@ func (c *MethodTryCommand) Execute(args []string) error {
 	}
 
 	var result interface{}
-	params := &url.Values{}
-	for _, arg := range args {
-		r := strings.SplitN(arg, "=", 2)
-		if len(r) != 2 {
-			return errors.New("args should be key=value")
-		}
-		params.Add(r[0], r[1])
+	params, err := piwigo.ArgsToForm(args)
+	if err != nil {
+		return err
 	}
 
 	if err := p.Post(c.MethodName, params, &result); err != nil {
@@ -38,7 +30,9 @@ func (c *MethodTryCommand) Execute(args []string) error {
 		return err
 	}
 
-	piwigo.DumpResponse(result)
-	piwigo.DumpResponse(params)
+	piwigo.DumpResponse(map[string]interface{}{
+		"params": params,
+		"result": result,
+	})
 	return nil
 }

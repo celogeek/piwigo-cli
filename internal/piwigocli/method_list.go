@@ -10,7 +10,7 @@ import (
 type MethodListCommand struct{}
 
 type MethodListResult struct {
-	Methods []string `json:"methods"`
+	Methods piwigo.Methods `json:"methods"`
 }
 
 func (c *MethodListCommand) Execute(args []string) error {

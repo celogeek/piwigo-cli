@@ -11,13 +11,8 @@ import (
 type GetInfosCommand struct {
 }
 
-type Info struct {
-	Name  string      `json:"name"`
-	Value interface{} `json:"value"`
-}
-
 type GetInfosResponse struct {
-	Infos []Info `json:"infos"`
+	Infos piwigo.Infos `json:"infos"`
 }
 
 var getInfosCommand GetInfosCommand

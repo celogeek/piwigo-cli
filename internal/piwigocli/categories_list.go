@@ -11,15 +11,8 @@ import (
 type CategoriesListCommand struct {
 }
 
-type Category struct {
-	Id          int    `json:"id"`
-	Name        string `json:"name"`
-	ImagesCount int    `json:"nb_images"`
-	Url         string `json:"url"`
-}
-
 type GetCategoriesListResponse struct {
-	Categories []Category `json:"categories"`
+	Categories piwigo.Categories `json:"categories"`
 }
 
 func (c *CategoriesListCommand) Execute(args []string) error {

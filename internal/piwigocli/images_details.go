@@ -14,29 +14,7 @@ type ImagesDetailsCommand struct {
 	Id string `short:"i" long:"id" description:"ID of the images" required:"true"`
 }
 
-type Derivative struct {
-	Height int    `json:"height"`
-	Width  int    `json:"width"`
-	Url    string `json:"url"`
-}
-
-type GetImagesDetailsResponse struct {
-	Id            int                   `json:"id"`
-	Md5           string                `json:"md5sum"`
-	Name          string                `json:"name"`
-	DateAvailable piwigo.TimeResult     `json:"date_available"`
-	DateCreation  piwigo.TimeResult     `json:"date_creation"`
-	LastModified  piwigo.TimeResult     `json:"lastmodified"`
-	Width         int                   `json:"width"`
-	Height        int                   `json:"height"`
-	Url           string                `json:"page_url"`
-	ImageUrl      string                `json:"element_url"`
-	Filename      string                `json:"file"`
-	Filesize      int64                 `json:"filesize"`
-	Categories    piwigo.Categories     `json:"categories"`
-	Tags          piwigo.Tags           `json:"tags"`
-	Derivatives   map[string]Derivative `json:"derivatives"`
-}
+type GetImagesDetailsResponse piwigo.ImagesDetails
 
 func (c *ImagesDetailsCommand) Execute(args []string) error {
 	p := piwigo.Piwigo{}

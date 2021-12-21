@@ -1,7 +1,6 @@
 package piwigocli
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -15,41 +14,7 @@ type MethodDetailsCommand struct {
 	MethodName string `short:"m" long:"method-name" description:"Method name to details"`
 }
 
-type MethodDetailsParams struct {
-	Name         string      `json:"name"`
-	Optional     bool        `json:"optional"`
-	Type         string      `json:"type"`
-	AcceptArray  bool        `json:"acceptArray"`
-	DefaultValue interface{} `json:"defaultValue"`
-	MaxValue     interface{} `json:"maxValue"`
-	Info         string      `json:"info"`
-}
-
-type MethodDetailsOptions struct {
-	Admin    bool `json:"admin_only"`
-	PostOnly bool `json:"post_only"`
-}
-
-type MethodDetailsResult struct {
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Options     MethodDetailsOptions  `json:"options"`
-	Parameters  []MethodDetailsParams `json:"params"`
-}
-
-func (j *MethodDetailsOptions) UnmarshalJSON(data []byte) error {
-	var r interface{}
-	if err := json.Unmarshal(data, &r); err != nil {
-		return err
-	}
-
-	switch r := r.(type) {
-	case map[string]interface{}:
-		j.Admin, _ = r["admin_only"].(bool)
-		j.PostOnly, _ = r["post_only"].(bool)
-	}
-	return nil
-}
+type MethodDetailsResult piwigo.MethodDetails
 
 func (c *MethodDetailsCommand) Execute(args []string) error {
 	p := piwigo.Piwigo{}
