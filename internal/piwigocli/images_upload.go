@@ -6,6 +6,7 @@ import (
 
 type ImagesUploadCommand struct {
 	Filename string `short:"f" long:"filename" description:"File to upload"`
+	NBJobs   int    `short:"j" long:"jobs" description:"Number of jobs" default:"1"`
 }
 
 func (c *ImagesUploadCommand) Execute(args []string) error {
@@ -19,7 +20,7 @@ func (c *ImagesUploadCommand) Execute(args []string) error {
 		return err
 	}
 
-	err = p.UploadChunks(c.Filename)
+	err = p.UploadChunks(c.Filename, c.NBJobs)
 	if err != nil {
 		return err
 	}

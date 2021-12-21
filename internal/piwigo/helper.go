@@ -48,14 +48,14 @@ func Md5File(filename string) (string, error) {
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
-func Base64Chunk(file *os.File, position int64) (string, error) {
+func Base64Chunk(file *os.File, position int64) (int, string, error) {
 	b := make([]byte, CHUNK_SIZE)
 	n, err := file.ReadAt(b, position*CHUNK_SIZE)
 	if err != nil && err != io.EOF {
-		return "", err
+		return 0, "", err
 	}
 	if n == 0 {
-		return "", errors.New("position out of bound")
+		return 0, "", errors.New("position out of bound")
 	}
-	return base64.StdEncoding.EncodeToString(b[:n]), nil
+	return n, base64.StdEncoding.EncodeToString(b[:n]), nil
 }
