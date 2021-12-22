@@ -61,7 +61,7 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 		newBody := &bytes.Buffer{}
 		tee := io.TeeReader(r.Body, newBody)
 
-		var RawResult map[string]interface{}
+		var RawResult interface{}
 		err = json.NewDecoder(tee).Decode(&RawResult)
 		if err != nil {
 			return err

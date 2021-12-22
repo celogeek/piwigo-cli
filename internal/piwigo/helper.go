@@ -1,19 +1,23 @@
 package piwigo
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/schollz/progressbar/v3"
 )
 
-var CHUNK_SIZE int64 = int64(math.Pow(1024, 2))
+var CHUNK_BUFF_SIZE int64 = 32 * 1024
+var CHUNK_BUFF_COUNT int = 32
+var CHUNK_PRECOMPUTE_SIZE int = 8
 
 func DumpResponse(v interface{}) (err error) {
 	b, err := json.MarshalIndent(v, "", "  ")
@@ -40,22 +44,55 @@ func Md5File(filename string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer file.Close()
+
+	st, _ := file.Stat()
+	bar := progressbar.DefaultBytes(st.Size(), "checksumming")
+
 	hash := md5.New()
-	_, err = io.Copy(hash, file)
+	_, err = io.Copy(io.MultiWriter(hash, bar), file)
 	if err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
-func Base64Chunk(file *os.File, position int64) (int, string, error) {
-	b := make([]byte, CHUNK_SIZE)
-	n, err := file.ReadAt(b, position*CHUNK_SIZE)
-	if err != nil && err != io.EOF {
-		return 0, "", err
+type Base64ChunkResult struct {
+	Position int64
+	Size     int64
+	Buffer   bytes.Buffer
+}
+
+func Base64Chunker(filename string) (out chan *Base64ChunkResult, err error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return
 	}
-	if n == 0 {
-		return 0, "", errors.New("position out of bound")
-	}
-	return n, base64.StdEncoding.EncodeToString(b[:n]), nil
+
+	out = make(chan *Base64ChunkResult, CHUNK_PRECOMPUTE_SIZE)
+	go func() {
+		b := make([]byte, CHUNK_BUFF_SIZE)
+		defer f.Close()
+		defer close(out)
+		ok := false
+		for position := int64(0); !ok; position += 1 {
+			bf := &Base64ChunkResult{
+				Position: position,
+			}
+			b64 := base64.NewEncoder(base64.StdEncoding, &bf.Buffer)
+			for i := 0; i < CHUNK_BUFF_COUNT; i++ {
+				n, _ := f.Read(b)
+				if n == 0 {
+					ok = true
+					break
+				}
+				bf.Size += int64(n)
+				b64.Write(b[:n])
+			}
+			b64.Close()
+			out <- bf
+		}
+	}()
+
+	return
 }

@@ -10,6 +10,11 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
+type FileUploadResult struct {
+	ImageId int    `json:"image_id"`
+	Url     string `json:"url"`
+}
+
 func (p *Piwigo) FileExists(md5 string) bool {
 	var resp map[string]*string
 
@@ -22,83 +27,79 @@ func (p *Piwigo) FileExists(md5 string) bool {
 	return resp[md5] != nil
 }
 
-func (p *Piwigo) UploadChunks(filename string, nbJobs int) error {
+func (p *Piwigo) UploadChunks(filename string, nbJobs int) (*FileUploadResult, error) {
 	md5, err := Md5File(filename)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if p.FileExists(md5) {
-		return errors.New("file already exists")
+		return nil, errors.New("file already exists")
 	}
+	st, _ := os.Stat(filename)
 
-	f, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	st, err := f.Stat()
-	if err != nil {
-		return err
-	}
-
-	in := make(chan int64)
-	out := make(chan error)
 	wg := &sync.WaitGroup{}
+	chunks, err := Base64Chunker(filename)
+	errout := make(chan error)
 	bar := progressbar.DefaultBytes(
 		st.Size(),
 		"uploading",
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	for j := 0; j < nbJobs; j++ {
 		wg.Add(1)
-		go p.UploadChunk(md5, f, in, out, wg, bar)
+		go p.UploadChunk(md5, chunks, errout, wg, bar)
 	}
-
 	go func() {
-		nbChunks := st.Size()/CHUNK_SIZE + 1
-		for position := int64(0); position < nbChunks; position++ {
-			in <- position
-		}
-		close(in)
 		wg.Wait()
-		close(out)
 		bar.Close()
+		close(errout)
 	}()
 
-	var errString string
-	for err := range out {
-		errString += err.Error() + "\n"
+	var errstring string
+	for err := range errout {
+		errstring += err.Error() + "\n"
 	}
-	if errString != "" {
-		return errors.New(errString[:len(errString)-1])
+	if errstring != "" {
+		return nil, errors.New(errstring)
 	}
 
-	fmt.Println(md5)
+	var resp *FileUploadResult
+	err = p.Post("pwg.images.add", &url.Values{
+		"original_sum":      []string{md5},
+		"original_filename": []string{filename},
+		"check_uniqueness":  []string{"true"},
+	}, &resp)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	return resp, nil
 }
 
-func (p *Piwigo) UploadChunk(md5 string, f *os.File, in chan int64, out chan error, wg *sync.WaitGroup, bar *progressbar.ProgressBar) {
+func (p *Piwigo) UploadChunk(md5 string, chunks chan *Base64ChunkResult, errout chan error, wg *sync.WaitGroup, bar *progressbar.ProgressBar) {
 	defer wg.Done()
-	for position := range in {
-		n, b64, err := Base64Chunk(f, position)
-		if err != nil {
-			out <- fmt.Errorf("error on chunk %d: %v", position, err)
-			continue
-		}
-
-		err = p.Post("pwg.images.addChunk", &url.Values{
+	for chunk := range chunks {
+		var err error
+		data := &url.Values{
 			"original_sum": []string{md5},
-			"position":     []string{fmt.Sprint(position)},
+			"position":     []string{fmt.Sprint(chunk.Position)},
 			"type":         []string{"file"},
-			"data":         []string{b64},
-		}, nil)
+			"data":         []string{chunk.Buffer.String()},
+		}
+		for i := 0; i < 3; i++ {
+			err = p.Post("pwg.images.addChunk", data, nil)
+			if err == nil {
+				break
+			}
+		}
+		bar.Add64(chunk.Size)
 		if err != nil {
-			out <- fmt.Errorf("error on chunk %d: %v", position, err)
+			errout <- fmt.Errorf("error on chunk %d: %v", chunk.Position, err)
 			continue
 		}
-		bar.Add(n)
 	}
 }

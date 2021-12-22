@@ -1,6 +1,10 @@
 package piwigocli
 
 import (
+	"errors"
+	"path/filepath"
+	"strings"
+
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
 )
 
@@ -15,14 +19,27 @@ func (c *ImagesUploadCommand) Execute(args []string) error {
 		return err
 	}
 
-	_, err := p.Login()
+	status, err := p.Login()
 	if err != nil {
 		return err
 	}
 
-	err = p.UploadChunks(c.Filename, c.NBJobs)
+	ext := strings.ToLower(filepath.Ext(c.Filename)[1:])
+	if _, ok := status.UploadFileType[ext]; !ok {
+		return errors.New("unsupported file extension")
+	}
+
+	resp, err := p.UploadChunks(c.Filename, c.NBJobs)
 	if err != nil {
 		return err
+	}
+
+	switch ext {
+	case "ogg", "ogv", "mp4", "m4v", "webm", "webmv":
+		err = p.VideoJSSync(resp.ImageId)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

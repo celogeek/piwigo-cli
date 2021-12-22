@@ -28,6 +28,8 @@ func (c *SessionStatusCommand) Execute(args []string) error {
 		{"Version", resp.Version},
 		{"User", resp.User},
 		{"Role", resp.Role},
+		{"Admin Token", resp.Token},
+		{"Supported formats", resp.UploadFileType},
 	})
 
 	t.SetOutputMirror(os.Stdout)
