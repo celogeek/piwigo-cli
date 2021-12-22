@@ -2,6 +2,7 @@ package piwigocli
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -34,11 +35,14 @@ func (c *ImagesUploadCommand) Execute(args []string) error {
 		return err
 	}
 
-	switch ext {
-	case "ogg", "ogv", "mp4", "m4v", "webm", "webmv":
-		err = p.VideoJSSync(resp.ImageId)
-		if err != nil {
-			return err
+	if _, ok := status.Plugins["piwigo-videojs"]; ok {
+		switch ext {
+		case "ogg", "ogv", "mp4", "m4v", "webm", "webmv":
+			fmt.Println("syncing metadata with videojs")
+			err = p.VideoJSSync(resp.ImageId)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

@@ -1,13 +1,9 @@
 package piwigo
 
 import (
-	"encoding/json"
 	"errors"
 	"net/url"
-	"strings"
 )
-
-type UploadFileType map[string]bool
 
 type StatusResponse struct {
 	User           string         `json:"username"`
@@ -15,30 +11,7 @@ type StatusResponse struct {
 	Version        string         `json:"version"`
 	Token          string         `json:"pwg_token"`
 	UploadFileType UploadFileType `json:"upload_file_types"`
-}
-
-func (uft *UploadFileType) UnmarshalJSON(data []byte) error {
-	var r string
-	if err := json.Unmarshal(data, &r); err != nil {
-		return err
-	}
-	*uft = UploadFileType{}
-	for _, v := range strings.Split(r, ",") {
-		(*uft)[v] = true
-	}
-	return nil
-}
-
-func (uft UploadFileType) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + uft.String() + `"`), nil
-}
-
-func (uft UploadFileType) String() string {
-	keys := make([]string, 0, len(uft))
-	for k, _ := range uft {
-		keys = append(keys, k)
-	}
-	return strings.Join(keys, ",")
+	Plugins        ActivePlugin   `json:"plugins"`
 }
 
 func (p *Piwigo) GetStatus() (*StatusResponse, error) {
@@ -52,6 +25,12 @@ func (p *Piwigo) GetStatus() (*StatusResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	err = p.Post("pwg.plugins.getList", nil, &resp.Plugins)
+	if err != nil {
+		return nil, err
+	}
+
 	if resp.User == p.Username {
 		return resp, nil
 	}
