@@ -10,8 +10,9 @@ import (
 )
 
 type ImagesUploadCommand struct {
-	Filename string `short:"f" long:"filename" description:"File to upload"`
-	NBJobs   int    `short:"j" long:"jobs" description:"Number of jobs" default:"1"`
+	Filename   string `short:"f" long:"filename" description:"File to upload"`
+	NbJobs     int    `short:"j" long:"jobs" description:"Number of jobs" default:"1"`
+	CategoryId int    `short:"c" long:"category" description:"Category to upload the file"`
 }
 
 func (c *ImagesUploadCommand) Execute(args []string) error {
@@ -30,7 +31,7 @@ func (c *ImagesUploadCommand) Execute(args []string) error {
 		return errors.New("unsupported file extension")
 	}
 
-	resp, err := p.UploadChunks(c.Filename, c.NBJobs)
+	resp, err := p.UploadChunks(c.Filename, c.NbJobs, c.CategoryId)
 	if err != nil {
 		return err
 	}

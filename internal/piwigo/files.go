@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/schollz/progressbar/v3"
@@ -27,7 +28,7 @@ func (p *Piwigo) FileExists(md5 string) bool {
 	return resp[md5] != nil
 }
 
-func (p *Piwigo) UploadChunks(filename string, nbJobs int) (*FileUploadResult, error) {
+func (p *Piwigo) UploadChunks(filename string, nbJobs int, categoryId int) (*FileUploadResult, error) {
 	md5, err := Md5File(filename)
 	if err != nil {
 		return nil, err
@@ -71,10 +72,13 @@ func (p *Piwigo) UploadChunks(filename string, nbJobs int) (*FileUploadResult, e
 	var resp *FileUploadResult
 	data := &url.Values{}
 	data.Set("original_sum", md5)
-	data.Set("original_filename", filename)
+	data.Set("original_filename", filepath.Base(filename))
 	data.Set("check_uniqueness", "true")
 	if exif != nil && exif.CreatedAt != nil {
 		data.Set("date_creation", exif.CreatedAt.String())
+	}
+	if categoryId > 0 {
+		data.Set("categories", fmt.Sprint(categoryId))
 	}
 	err = p.Post("pwg.images.add", data, &resp)
 	if err != nil {
