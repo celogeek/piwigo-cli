@@ -26,10 +26,7 @@ func (p *Piwigo) GetStatus() (*StatusResponse, error) {
 		return nil, err
 	}
 
-	err = p.Post("pwg.plugins.getList", nil, &resp.Plugins)
-	if err != nil {
-		return nil, err
-	}
+	p.Post("pwg.plugins.getList", nil, &resp.Plugins)
 
 	if resp.User == p.Username {
 		return resp, nil
