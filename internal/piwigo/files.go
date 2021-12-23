@@ -36,8 +36,8 @@ func (p *Piwigo) UploadChunks(filename string, nbJobs int) (*FileUploadResult, e
 	if p.FileExists(md5) {
 		return nil, errors.New("file already exists")
 	}
-	st, _ := os.Stat(filename)
 
+	st, _ := os.Stat(filename)
 	wg := &sync.WaitGroup{}
 	chunks, err := Base64Chunker(filename)
 	errout := make(chan error)
@@ -67,12 +67,16 @@ func (p *Piwigo) UploadChunks(filename string, nbJobs int) (*FileUploadResult, e
 		return nil, errors.New(errstring)
 	}
 
+	exif, _ := Exif(filename)
 	var resp *FileUploadResult
-	err = p.Post("pwg.images.add", &url.Values{
-		"original_sum":      []string{md5},
-		"original_filename": []string{filename},
-		"check_uniqueness":  []string{"true"},
-	}, &resp)
+	data := &url.Values{}
+	data.Set("original_sum", md5)
+	data.Set("original_filename", filename)
+	data.Set("check_uniqueness", "true")
+	if exif != nil && exif.CreatedAt != nil {
+		data.Set("date_creation", exif.CreatedAt.String())
+	}
+	err = p.Post("pwg.images.add", data, &resp)
 	if err != nil {
 		return nil, err
 	}

@@ -36,7 +36,7 @@ func (c TimeResult) String() string {
 	if t.IsZero() {
 		return ""
 	} else {
-		return t.Format(time.RFC3339)
+		return t.Format("2006-01-02 15:04:05")
 	}
 }
 
