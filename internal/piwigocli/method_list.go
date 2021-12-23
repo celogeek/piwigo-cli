@@ -2,12 +2,15 @@ package piwigocli
 
 import (
 	"os"
+	"regexp"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
-type MethodListCommand struct{}
+type MethodListCommand struct {
+	Filter string `short:"x" long:"filter" description:"Regexp filter"`
+}
 
 type MethodListResult struct {
 	Methods piwigo.Methods `json:"methods"`
@@ -30,13 +33,19 @@ func (c *MethodListCommand) Execute(args []string) error {
 		return err
 	}
 
-	t := table.NewWriter()
+	filter := regexp.MustCompile("")
+	if c.Filter != "" {
+		filter = regexp.MustCompile("(?i)" + c.Filter)
+	}
 
+	t := table.NewWriter()
 	t.AppendHeader(table.Row{"Methods"})
 	for _, method := range result.Methods {
-		t.AppendRow(table.Row{
-			method,
-		})
+		if filter.MatchString(method) {
+			t.AppendRow(table.Row{
+				method,
+			})
+		}
 	}
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleLight)

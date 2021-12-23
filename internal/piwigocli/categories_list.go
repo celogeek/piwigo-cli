@@ -37,13 +37,13 @@ func (c *CategoriesListCommand) Execute(args []string) error {
 		return err
 	}
 
-	t := table.NewWriter()
-
-	t.AppendHeader(table.Row{"Id", "Name", "Images", "Url"})
 	filter := regexp.MustCompile("")
 	if c.Filter != "" {
 		filter = regexp.MustCompile("(?i)" + c.Filter)
 	}
+
+	t := table.NewWriter()
+	t.AppendHeader(table.Row{"Id", "Name", "Images", "Url"})
 	for _, category := range resp.Categories {
 		if filter.MatchString(category.Name) {
 			t.AppendRow(table.Row{
