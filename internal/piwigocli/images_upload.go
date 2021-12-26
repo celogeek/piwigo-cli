@@ -10,7 +10,7 @@ import (
 )
 
 type ImagesUploadCommand struct {
-	Filename   string `short:"f" long:"filename" description:"File to upload"`
+	Filename   string `short:"f" long:"filename" description:"File to upload" required:"true"`
 	NbJobs     int    `short:"j" long:"jobs" description:"Number of jobs" default:"1"`
 	CategoryId int    `short:"c" long:"category" description:"Category to upload the file"`
 }
