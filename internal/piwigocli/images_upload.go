@@ -27,7 +27,7 @@ func (c *ImagesUploadCommand) Execute(args []string) error {
 	}
 
 	ext := strings.ToLower(filepath.Ext(c.Filename)[1:])
-	if _, ok := status.UploadFileType[ext]; !ok {
+	if !status.UploadFileType.Has(ext) {
 		return errors.New("unsupported file extension")
 	}
 

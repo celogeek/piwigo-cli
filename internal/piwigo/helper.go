@@ -39,7 +39,7 @@ func ArgsToForm(args []string) (*url.Values, error) {
 	return params, nil
 }
 
-func Md5File(filename string) (string, error) {
+func Md5File(filename string, progress bool) (string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return "", err
@@ -47,10 +47,14 @@ func Md5File(filename string) (string, error) {
 	defer file.Close()
 
 	st, _ := file.Stat()
-	bar := progressbar.DefaultBytes(st.Size(), "checksumming")
-
 	hash := md5.New()
-	_, err = io.Copy(io.MultiWriter(hash, bar), file)
+
+	if progress {
+		bar := progressbar.DefaultBytes(st.Size(), "checksumming")
+		_, err = io.Copy(io.MultiWriter(hash, bar), file)
+	} else {
+		_, err = io.Copy(hash, file)
+	}
 	if err != nil {
 		return "", err
 	}

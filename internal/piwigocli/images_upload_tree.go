@@ -2,8 +2,6 @@ package piwigocli
 
 import (
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
 )
@@ -20,34 +18,16 @@ func (c *ImagesUploadTreeCommand) Execute(args []string) error {
 		return err
 	}
 
-	_, err := p.Login()
+	status, err := p.Login()
 	if err != nil {
 		return err
 	}
 
-	rootPath, err := filepath.Abs(c.Dirname)
+	files, err := p.UploadTree(c.Dirname, c.CategoryId, 0, status.UploadFileType)
 	if err != nil {
 		return err
 	}
-
-	categoriesId, err := p.CategoriesId(c.CategoryId)
-	if err != nil {
-		return err
-	}
-
-	dirs, err := ioutil.ReadDir(rootPath)
-	if err != nil {
-		return err
-	}
-
-	for _, dir := range dirs {
-		if !dir.IsDir() {
-			continue
-		}
-		if _, ok := categoriesId[dir.Name()]; !ok {
-			fmt.Println("Creating", dir.Name(), "...")
-		}
-	}
+	fmt.Println("Total", len(files))
 
 	return nil
 }

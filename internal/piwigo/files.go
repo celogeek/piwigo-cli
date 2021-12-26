@@ -3,12 +3,15 @@ package piwigo
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/schollz/progressbar/v3"
+	"golang.org/x/text/unicode/norm"
 )
 
 type FileUploadResult struct {
@@ -29,7 +32,7 @@ func (p *Piwigo) FileExists(md5 string) bool {
 }
 
 func (p *Piwigo) UploadChunks(filename string, nbJobs int, categoryId int) (*FileUploadResult, error) {
-	md5, err := Md5File(filename)
+	md5, err := Md5File(filename, false)
 	if err != nil {
 		return nil, err
 	}
@@ -110,4 +113,80 @@ func (p *Piwigo) UploadChunk(md5 string, chunks chan *Base64ChunkResult, errout 
 			continue
 		}
 	}
+}
+
+type FileToUpload struct {
+	Filename   string
+	Md5        string
+	CategoryId int
+}
+
+func (p *Piwigo) UploadTree(rootPath string, parentCategoryId int, level int, filter UploadFileType) ([]FileToUpload, error) {
+	rootPath, err := filepath.Abs(rootPath)
+	if err != nil {
+		return nil, err
+	}
+
+	categoriesId, err := p.CategoriesId(parentCategoryId)
+	if err != nil {
+		return nil, err
+	}
+
+	dirs, err := ioutil.ReadDir(rootPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var files []FileToUpload
+
+	levelStr := strings.Repeat("  ", level)
+	for _, dir := range dirs {
+		if !dir.IsDir() {
+			ext := strings.ToLower(filepath.Ext(dir.Name())[1:])
+			if !filter.Has(ext) {
+				continue
+			}
+			filename := filepath.Join(rootPath, dir.Name())
+			md5, err := Md5File(filename, false)
+			if err != nil {
+				return nil, err
+			}
+			status := "OK"
+			if p.FileExists(md5) {
+				status = "SKIP"
+			}
+			fmt.Printf("%s - %s %s - %s\n", levelStr, dir.Name(), md5, status)
+			if status == "OK" {
+				files = append(files, FileToUpload{
+					Filename:   filename,
+					Md5:        md5,
+					CategoryId: parentCategoryId,
+				})
+			}
+			continue
+		}
+		dirname := norm.NFC.String(dir.Name())
+		categoryId, ok := categoriesId[dirname]
+		fmt.Printf("%s%s\n", levelStr, dirname)
+		if !ok {
+			var resp struct {
+				Id int `json:"id"`
+			}
+			err = p.Post("pwg.categories.add", &url.Values{
+				"name":   []string{strings.ReplaceAll(dirname, "'", `\'`)},
+				"parent": []string{fmt.Sprint(parentCategoryId)},
+			}, &resp)
+			if err != nil {
+				return nil, err
+			}
+			categoryId = resp.Id
+		}
+		newFiles, err := p.UploadTree(filepath.Join(rootPath, dirname), categoryId, level+1, filter)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, newFiles...)
+	}
+
+	return files, nil
 }

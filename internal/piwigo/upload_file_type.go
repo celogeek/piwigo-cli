@@ -34,3 +34,8 @@ func (uft UploadFileType) String() string {
 	}
 	return strings.Join(keys, ",")
 }
+
+func (uft UploadFileType) Has(s string) bool {
+	_, ok := uft[s]
+	return ok
+}
