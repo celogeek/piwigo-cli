@@ -11,8 +11,6 @@ import (
 	"net/url"
 	"os"
 	"strings"
-
-	"github.com/schollz/progressbar/v3"
 )
 
 var CHUNK_BUFF_SIZE int64 = 32 * 1024
@@ -39,26 +37,20 @@ func ArgsToForm(args []string) (*url.Values, error) {
 	return params, nil
 }
 
-func Md5File(filename string, progress bool) (string, error) {
+func Md5File(filename string) (result string, err error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return "", err
+		return
 	}
 	defer file.Close()
 
-	st, _ := file.Stat()
 	hash := md5.New()
-
-	if progress {
-		bar := progressbar.DefaultBytes(st.Size(), "checksumming")
-		_, err = io.Copy(io.MultiWriter(hash, bar), file)
-	} else {
-		_, err = io.Copy(hash, file)
-	}
+	_, err = io.Copy(hash, file)
 	if err != nil {
-		return "", err
+		return
 	}
-	return fmt.Sprintf("%x", hash.Sum(nil)), nil
+	result = fmt.Sprintf("%x", hash.Sum(nil))
+	return
 }
 
 type Base64ChunkResult struct {

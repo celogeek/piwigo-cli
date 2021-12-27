@@ -2,11 +2,11 @@ package piwigocli
 
 import (
 	"errors"
-	"fmt"
 	"path/filepath"
 	"strings"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
+	"github.com/schollz/progressbar/v3"
 )
 
 type ImagesUploadCommand struct {
@@ -31,20 +31,24 @@ func (c *ImagesUploadCommand) Execute(args []string) error {
 		return errors.New("unsupported file extension")
 	}
 
-	resp, err := p.UploadChunks(c.Filename, c.NbJobs, c.CategoryId)
-	if err != nil {
-		return err
+	_, hasVideoJS := status.Plugins["piwigo-videojs"]
+
+	file := &piwigo.FileToUpload{
+		Dir:        filepath.Dir(c.Filename),
+		Name:       filepath.Base(c.Filename),
+		CategoryId: c.CategoryId,
 	}
 
-	if _, ok := status.Plugins["piwigo-videojs"]; ok {
-		switch ext {
-		case "ogg", "ogv", "mp4", "m4v", "webm", "webmv":
-			fmt.Println("syncing metadata with videojs")
-			err = p.VideoJSSync(resp.ImageId)
-			if err != nil {
-				return err
-			}
-		}
+	stat := &piwigo.FileToUploadStat{
+		Progress: progressbar.DefaultBytes(1, "prepare"),
+	}
+	defer stat.Close()
+	stat.Add(file.Size())
+	stat.Refresh()
+
+	err = p.Upload(file, stat, c.NbJobs, hasVideoJS)
+	if err != nil {
+		return err
 	}
 
 	return nil

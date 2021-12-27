@@ -5,19 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
-	"github.com/schollz/progressbar/v3"
 	"golang.org/x/text/unicode/norm"
 )
-
-type FileUploadResult struct {
-	ImageId int    `json:"image_id"`
-	Url     string `json:"url"`
-}
 
 func (p *Piwigo) FileExists(md5 string) bool {
 	var resp map[string]*string
@@ -31,35 +24,32 @@ func (p *Piwigo) FileExists(md5 string) bool {
 	return resp[md5] != nil
 }
 
-func (p *Piwigo) UploadChunks(filename string, nbJobs int, categoryId int) (*FileUploadResult, error) {
-	md5, err := Md5File(filename, false)
-	if err != nil {
-		return nil, err
+func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, hasVideoJS bool) error {
+	if file.MD5() == "" {
+		stat.Fail()
+		return errors.New("checksum error")
 	}
 
-	if p.FileExists(md5) {
-		return nil, errors.New("file already exists")
+	stat.Check()
+
+	if p.FileExists(file.MD5()) {
+		stat.Skip()
+		return errors.New("file already exists")
 	}
 
-	st, _ := os.Stat(filename)
 	wg := &sync.WaitGroup{}
-	chunks, err := Base64Chunker(filename)
+	chunks, err := Base64Chunker(file.FullPath())
 	errout := make(chan error)
-	bar := progressbar.DefaultBytes(
-		st.Size(),
-		"uploading",
-	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for j := 0; j < nbJobs; j++ {
 		wg.Add(1)
-		go p.UploadChunk(md5, chunks, errout, wg, bar)
+		go p.UploadChunk(file.MD5(), chunks, errout, wg, stat)
 	}
 	go func() {
 		wg.Wait()
-		bar.Close()
 		close(errout)
 	}()
 
@@ -68,30 +58,40 @@ func (p *Piwigo) UploadChunks(filename string, nbJobs int, categoryId int) (*Fil
 		errstring += err.Error() + "\n"
 	}
 	if errstring != "" {
-		return nil, errors.New(errstring)
+		stat.Fail()
+		return errors.New(errstring)
 	}
 
-	exif, _ := Exif(filename)
+	exif, _ := Exif(file.FullPath())
 	var resp *FileUploadResult
 	data := &url.Values{}
-	data.Set("original_sum", md5)
-	data.Set("original_filename", filepath.Base(filename))
+	data.Set("original_sum", file.MD5())
+	data.Set("original_filename", file.Name)
 	data.Set("check_uniqueness", "true")
 	if exif != nil && exif.CreatedAt != nil {
 		data.Set("date_creation", exif.CreatedAt.String())
 	}
-	if categoryId > 0 {
-		data.Set("categories", fmt.Sprint(categoryId))
+	if file.CategoryId > 0 {
+		data.Set("categories", fmt.Sprint(file.CategoryId))
 	}
 	err = p.Post("pwg.images.add", data, &resp)
 	if err != nil {
-		return nil, err
+		stat.Fail()
+		return err
 	}
 
-	return resp, nil
+	if hasVideoJS {
+		switch file.Ext() {
+		case "ogg", "ogv", "mp4", "m4v", "webm", "webmv":
+			p.VideoJSSync(resp.ImageId)
+		}
+	}
+
+	stat.Done()
+	return nil
 }
 
-func (p *Piwigo) UploadChunk(md5 string, chunks chan *Base64ChunkResult, errout chan error, wg *sync.WaitGroup, bar *progressbar.ProgressBar) {
+func (p *Piwigo) UploadChunk(md5 string, chunks chan *Base64ChunkResult, errout chan error, wg *sync.WaitGroup, progress *FileToUploadStat) {
 	defer wg.Done()
 	for chunk := range chunks {
 		var err error
@@ -107,18 +107,12 @@ func (p *Piwigo) UploadChunk(md5 string, chunks chan *Base64ChunkResult, errout 
 				break
 			}
 		}
-		bar.Add64(chunk.Size)
+		progress.Commit(chunk.Size)
 		if err != nil {
 			errout <- fmt.Errorf("error on chunk %d: %v", chunk.Position, err)
 			continue
 		}
 	}
-}
-
-type FileToUpload struct {
-	Filename   string
-	Md5        string
-	CategoryId int
 }
 
 func (p *Piwigo) UploadTree(rootPath string, parentCategoryId int, level int, filter UploadFileType) ([]FileToUpload, error) {
@@ -147,7 +141,7 @@ func (p *Piwigo) UploadTree(rootPath string, parentCategoryId int, level int, fi
 				continue
 			}
 			filename := filepath.Join(rootPath, dir.Name())
-			md5, err := Md5File(filename, false)
+			md5, err := Md5File(filename)
 			if err != nil {
 				return nil, err
 			}
@@ -158,8 +152,8 @@ func (p *Piwigo) UploadTree(rootPath string, parentCategoryId int, level int, fi
 			fmt.Printf("%s - %s %s - %s\n", levelStr, dir.Name(), md5, status)
 			if status == "OK" {
 				files = append(files, FileToUpload{
-					Filename:   filename,
-					Md5:        md5,
+					Dir:        rootPath,
+					Name:       dir.Name(),
 					CategoryId: parentCategoryId,
 				})
 			}
