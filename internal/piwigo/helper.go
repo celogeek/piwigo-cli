@@ -86,7 +86,9 @@ func Base64Chunker(filename string) (out chan *Base64ChunkResult, err error) {
 				b64.Write(b[:n])
 			}
 			b64.Close()
-			out <- bf
+			if bf.Size > 0 {
+				out <- bf
+			}
 		}
 	}()
 

@@ -44,10 +44,7 @@ func (c *ImagesUploadCommand) Execute(args []string) error {
 	}
 	defer stat.Close()
 	stat.Add()
-	err = p.Upload(file, stat, c.NbJobs, hasVideoJS)
-	if err != nil {
-		return err
-	}
+	p.Upload(file, stat, c.NbJobs, hasVideoJS)
 
 	return nil
 }

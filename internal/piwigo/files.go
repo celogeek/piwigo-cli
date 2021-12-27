@@ -1,7 +1,6 @@
 package piwigo
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -24,18 +23,21 @@ func (p *Piwigo) FileExists(md5 string) bool {
 	return resp[md5] != nil
 }
 
-func (p *Piwigo) CheckUploadFile(file *FileToUpload, stat *FileToUploadStat) error {
+func (p *Piwigo) CheckUploadFile(file *FileToUpload, stat *FileToUploadStat) (err error) {
 	if !file.Checked() {
 		if file.MD5() == "" {
 			stat.Fail()
 			stat.Check()
-			return errors.New("checksum error")
+			err = fmt.Errorf("%s: checksum error", file.FullPath())
+			stat.Error(file.FullPath(), err)
+			return
 		}
 
 		if p.FileExists(file.MD5()) {
 			stat.Skip()
 			stat.Check()
-			return errors.New("file already exists")
+			err = fmt.Errorf("%s: file already exists", file.FullPath())
+			return
 		}
 
 		stat.Check()
@@ -44,34 +46,26 @@ func (p *Piwigo) CheckUploadFile(file *FileToUpload, stat *FileToUploadStat) err
 	return nil
 }
 
-func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, hasVideoJS bool) error {
+func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, hasVideoJS bool) {
 	err := p.CheckUploadFile(file, stat)
 	if err != nil {
-		return err
+		return
 	}
 	wg := &sync.WaitGroup{}
 	chunks, err := Base64Chunker(file.FullPath())
-	errout := make(chan error)
 	if err != nil {
-		return err
+		stat.Error(file.FullPath(), err)
+		return
 	}
 
+	ok := true
 	for j := 0; j < nbJobs; j++ {
 		wg.Add(1)
-		go p.UploadChunk(file.MD5(), chunks, errout, wg, stat)
+		go p.UploadChunk(file, chunks, wg, stat, &ok)
 	}
-	go func() {
-		wg.Wait()
-		close(errout)
-	}()
-
-	var errstring string
-	for err := range errout {
-		errstring += err.Error() + "\n"
-	}
-	if errstring != "" {
-		stat.Fail()
-		return errors.New(errstring)
+	wg.Wait()
+	if !ok {
+		return
 	}
 
 	exif, _ := Exif(file.FullPath())
@@ -89,7 +83,8 @@ func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, 
 	err = p.Post("pwg.images.add", data, &resp)
 	if err != nil {
 		stat.Fail()
-		return err
+		stat.Error(file.FullPath(), err)
+		return
 	}
 
 	if hasVideoJS {
@@ -100,15 +95,14 @@ func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, 
 	}
 
 	stat.Done()
-	return nil
 }
 
-func (p *Piwigo) UploadChunk(md5 string, chunks chan *Base64ChunkResult, errout chan error, wg *sync.WaitGroup, progress *FileToUploadStat) {
+func (p *Piwigo) UploadChunk(file *FileToUpload, chunks chan *Base64ChunkResult, wg *sync.WaitGroup, stat *FileToUploadStat, ok *bool) {
 	defer wg.Done()
 	for chunk := range chunks {
 		var err error
 		data := &url.Values{
-			"original_sum": []string{md5},
+			"original_sum": []string{file.MD5()},
 			"position":     []string{fmt.Sprint(chunk.Position)},
 			"type":         []string{"file"},
 			"data":         []string{chunk.Buffer.String()},
@@ -119,10 +113,12 @@ func (p *Piwigo) UploadChunk(md5 string, chunks chan *Base64ChunkResult, errout 
 				break
 			}
 		}
-		progress.Commit(chunk.Size)
+		stat.Commit(chunk.Size)
 		if err != nil {
-			errout <- fmt.Errorf("error on chunk %d: %v", chunk.Position, err)
-			continue
+			stat.Fail()
+			stat.Error(file.FullPath(), err)
+			*ok = false
+			return
 		}
 	}
 }
@@ -134,22 +130,25 @@ func (p *Piwigo) ScanTree(
 	filter *UploadFileType,
 	stat *FileToUploadStat,
 	files chan *FileToUpload,
-) (err error) {
+) {
 	if level == 0 {
 		defer close(files)
 	}
-	rootPath, err = filepath.Abs(rootPath)
+	rootPath, err := filepath.Abs(rootPath)
 	if err != nil {
+		stat.Error(rootPath, err)
 		return
 	}
 
 	categoriesId, err := p.CategoriesId(parentCategoryId)
 	if err != nil {
+		stat.Error(rootPath, err)
 		return
 	}
 
 	dirs, err := ioutil.ReadDir(rootPath)
 	if err != nil {
+		stat.Error(rootPath, err)
 		return
 	}
 
@@ -167,14 +166,12 @@ func (p *Piwigo) ScanTree(
 					"parent": []string{fmt.Sprint(parentCategoryId)},
 				}, &resp)
 				if err != nil {
+					stat.Error(rootPath, err)
 					return
 				}
 				categoryId = resp.Id
 			}
-			err = p.ScanTree(filepath.Join(rootPath, dirname), categoryId, level+1, filter, stat, files)
-			if err != nil {
-				return
-			}
+			p.ScanTree(filepath.Join(rootPath, dirname), categoryId, level+1, filter, stat, files)
 		case false: // File
 			file := &FileToUpload{
 				Dir:        rootPath,
@@ -189,7 +186,6 @@ func (p *Piwigo) ScanTree(
 		}
 	}
 
-	return nil
 }
 
 func (p *Piwigo) CheckFiles(filesToCheck chan *FileToUpload, files chan *FileToUpload, stat *FileToUploadStat, nbJobs int) {
@@ -202,9 +198,10 @@ func (p *Piwigo) CheckFiles(filesToCheck chan *FileToUpload, files chan *FileToU
 			defer wg.Done()
 			for file := range filesToCheck {
 				err := p.CheckUploadFile(file, stat)
-				if err == nil {
-					files <- file
+				if err != nil {
+					continue
 				}
+				files <- file
 			}
 		}()
 	}
@@ -212,35 +209,18 @@ func (p *Piwigo) CheckFiles(filesToCheck chan *FileToUpload, files chan *FileToU
 	wg.Wait()
 }
 
-func (p *Piwigo) UploadFiles(files chan *FileToUpload, stat *FileToUploadStat, hasVideoJS bool, nbJobs int) error {
+func (p *Piwigo) UploadFiles(files chan *FileToUpload, stat *FileToUploadStat, hasVideoJS bool, nbJobs int) {
 	defer stat.Close()
-	errchan := make(chan error)
-	wg := &sync.WaitGroup{}
 
+	wg := &sync.WaitGroup{}
 	for i := 0; i < nbJobs; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for file := range files {
-				err := p.Upload(file, stat, 1, hasVideoJS)
-				if err != nil {
-					errchan <- fmt.Errorf("%s: %s", file.FullPath(), err.Error())
-				}
+				p.Upload(file, stat, 2, hasVideoJS)
 			}
 		}()
 	}
-	go func() {
-		wg.Wait()
-		close(errchan)
-	}()
-
-	errstring := ""
-	for err := range errchan {
-		errstring += err.Error()
-	}
-	if errstring != "" {
-		return errors.New(errstring)
-	}
-
-	return nil
+	wg.Wait()
 }
