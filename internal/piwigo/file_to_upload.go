@@ -25,6 +25,10 @@ func (f *FileToUpload) FullPath() string {
 	return filepath.Join(f.Dir, f.Name)
 }
 
+func (f *FileToUpload) Checked() bool {
+	return f.md5 != nil
+}
+
 func (f *FileToUpload) MD5() string {
 	if f.md5 == nil {
 		md5, err := Md5File(f.FullPath())

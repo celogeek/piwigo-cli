@@ -25,12 +25,13 @@ func (p *Piwigo) FileExists(md5 string) bool {
 }
 
 func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, hasVideoJS bool) error {
-	if file.MD5() == "" {
-		stat.Fail()
-		return errors.New("checksum error")
+	if !file.Checked() {
+		if file.MD5() == "" {
+			stat.Fail()
+			return errors.New("checksum error")
+		}
+		stat.Check()
 	}
-
-	stat.Check()
 
 	if p.FileExists(file.MD5()) {
 		stat.Skip()
