@@ -33,7 +33,7 @@ func (s *FileToUploadStat) Check() {
 func (s *FileToUploadStat) AddBytes(filesize int64) {
 	s.mu.Lock()
 	s.TotalBytes += filesize
-	s.Progress.ChangeMax64(s.TotalBytes)
+	s.Progress.ChangeMax64(s.TotalBytes + 1)
 	s.Refresh()
 	s.mu.Unlock()
 }
@@ -66,7 +66,6 @@ func (s *FileToUploadStat) Close() {
 func (s *FileToUploadStat) Fail() {
 	s.mu.Lock()
 	s.Failed++
-	s.Checked++
 	s.Refresh()
 	s.mu.Unlock()
 }
@@ -74,7 +73,6 @@ func (s *FileToUploadStat) Fail() {
 func (s *FileToUploadStat) Skip() {
 	s.mu.Lock()
 	s.Skipped++
-	s.Checked++
 	s.Refresh()
 	s.mu.Unlock()
 }

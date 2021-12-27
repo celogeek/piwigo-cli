@@ -21,6 +21,7 @@ func (c *ImagesUploadTreeCommand) Execute(args []string) error {
 	if err != nil {
 		return err
 	}
+	_, hasVideoJS := status.Plugins["piwigo-videojs"]
 
 	stat := &piwigo.FileToUploadStat{
 		Progress: progressbar.DefaultBytes(1, "..."),
@@ -32,8 +33,5 @@ func (c *ImagesUploadTreeCommand) Execute(args []string) error {
 
 	go p.ScanTree(c.Dirname, c.CategoryId, 0, &status.UploadFileType, stat, filesToCheck)
 	go p.CheckFiles(filesToCheck, files, stat, 8)
-	for range files {
-	}
-
-	return nil
+	return p.UploadFiles(files, stat, hasVideoJS, 8)
 }

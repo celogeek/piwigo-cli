@@ -28,11 +28,13 @@ func (p *Piwigo) CheckUploadFile(file *FileToUpload, stat *FileToUploadStat) err
 	if !file.Checked() {
 		if file.MD5() == "" {
 			stat.Fail()
+			stat.Check()
 			return errors.New("checksum error")
 		}
 
 		if p.FileExists(file.MD5()) {
 			stat.Skip()
+			stat.Check()
 			return errors.New("file already exists")
 		}
 
@@ -193,20 +195,52 @@ func (p *Piwigo) ScanTree(
 func (p *Piwigo) CheckFiles(filesToCheck chan *FileToUpload, files chan *FileToUpload, stat *FileToUploadStat, nbJobs int) {
 	defer close(files)
 
-	wgChecker := &sync.WaitGroup{}
+	wg := &sync.WaitGroup{}
 	for i := 0; i < nbJobs; i++ {
-		wgChecker.Add(1)
+		wg.Add(1)
 		go func() {
-			defer wgChecker.Done()
+			defer wg.Done()
 			for file := range filesToCheck {
 				err := p.CheckUploadFile(file, stat)
-				if err != nil {
-					continue
+				if err == nil {
+					files <- file
 				}
-				files <- file
 			}
 		}()
 	}
 
-	wgChecker.Wait()
+	wg.Wait()
+}
+
+func (p *Piwigo) UploadFiles(files chan *FileToUpload, stat *FileToUploadStat, hasVideoJS bool, nbJobs int) error {
+	defer stat.Close()
+	errchan := make(chan error)
+	wg := &sync.WaitGroup{}
+
+	for i := 0; i < nbJobs; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for file := range files {
+				err := p.Upload(file, stat, 1, hasVideoJS)
+				if err != nil {
+					errchan <- fmt.Errorf("%s: %s", file.FullPath(), err.Error())
+				}
+			}
+		}()
+	}
+	go func() {
+		wg.Wait()
+		close(errchan)
+	}()
+
+	errstring := ""
+	for err := range errchan {
+		errstring += err.Error()
+	}
+	if errstring != "" {
+		return errors.New(errstring)
+	}
+
+	return nil
 }
