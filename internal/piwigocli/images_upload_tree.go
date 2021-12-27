@@ -1,9 +1,8 @@
 package piwigocli
 
 import (
-	"fmt"
-
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
+	"github.com/schollz/progressbar/v3"
 )
 
 type ImagesUploadTreeCommand struct {
@@ -23,11 +22,18 @@ func (c *ImagesUploadTreeCommand) Execute(args []string) error {
 		return err
 	}
 
-	files, err := p.UploadTree(c.Dirname, c.CategoryId, 0, status.UploadFileType)
-	if err != nil {
-		return err
+	stat := &piwigo.FileToUploadStat{
+		Progress: progressbar.DefaultBytes(1, "..."),
 	}
-	fmt.Println("Total", len(files))
+	defer stat.Close()
+
+	filesToCheck := make(chan *piwigo.FileToUpload, 1000)
+	files := make(chan *piwigo.FileToUpload, 1000)
+
+	go p.ScanTree(c.Dirname, c.CategoryId, 0, &status.UploadFileType, stat, filesToCheck)
+	go p.CheckFiles(filesToCheck, files, stat, 8)
+	for range files {
+	}
 
 	return nil
 }

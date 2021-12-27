@@ -24,20 +24,29 @@ func (p *Piwigo) FileExists(md5 string) bool {
 	return resp[md5] != nil
 }
 
-func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, hasVideoJS bool) error {
+func (p *Piwigo) CheckUploadFile(file *FileToUpload, stat *FileToUploadStat) error {
 	if !file.Checked() {
 		if file.MD5() == "" {
 			stat.Fail()
 			return errors.New("checksum error")
 		}
+
+		if p.FileExists(file.MD5()) {
+			stat.Skip()
+			return errors.New("file already exists")
+		}
+
 		stat.Check()
+		stat.AddBytes(file.Size())
 	}
+	return nil
+}
 
-	if p.FileExists(file.MD5()) {
-		stat.Skip()
-		return errors.New("file already exists")
+func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, hasVideoJS bool) error {
+	err := p.CheckUploadFile(file, stat)
+	if err != nil {
+		return err
 	}
-
 	wg := &sync.WaitGroup{}
 	chunks, err := Base64Chunker(file.FullPath())
 	errout := make(chan error)
@@ -116,72 +125,88 @@ func (p *Piwigo) UploadChunk(md5 string, chunks chan *Base64ChunkResult, errout 
 	}
 }
 
-func (p *Piwigo) UploadTree(rootPath string, parentCategoryId int, level int, filter UploadFileType) ([]FileToUpload, error) {
-	rootPath, err := filepath.Abs(rootPath)
+func (p *Piwigo) ScanTree(
+	rootPath string,
+	parentCategoryId int,
+	level int,
+	filter *UploadFileType,
+	stat *FileToUploadStat,
+	files chan *FileToUpload,
+) (err error) {
+	if level == 0 {
+		defer close(files)
+	}
+	rootPath, err = filepath.Abs(rootPath)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	categoriesId, err := p.CategoriesId(parentCategoryId)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	dirs, err := ioutil.ReadDir(rootPath)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	var files []FileToUpload
-
-	levelStr := strings.Repeat("  ", level)
 	for _, dir := range dirs {
-		if !dir.IsDir() {
-			ext := strings.ToLower(filepath.Ext(dir.Name())[1:])
-			if !filter.Has(ext) {
+		switch dir.IsDir() {
+		case true: // Directory
+			dirname := norm.NFC.String(dir.Name())
+			categoryId, ok := categoriesId[dirname]
+			if !ok {
+				var resp struct {
+					Id int `json:"id"`
+				}
+				err = p.Post("pwg.categories.add", &url.Values{
+					"name":   []string{strings.ReplaceAll(dirname, "'", `\'`)},
+					"parent": []string{fmt.Sprint(parentCategoryId)},
+				}, &resp)
+				if err != nil {
+					return
+				}
+				categoryId = resp.Id
+			}
+			err = p.ScanTree(filepath.Join(rootPath, dirname), categoryId, level+1, filter, stat, files)
+			if err != nil {
+				return
+			}
+		case false: // File
+			file := &FileToUpload{
+				Dir:        rootPath,
+				Name:       dir.Name(),
+				CategoryId: parentCategoryId,
+			}
+			if !filter.Has(file.Ext()) {
 				continue
 			}
-			filename := filepath.Join(rootPath, dir.Name())
-			md5, err := Md5File(filename)
-			if err != nil {
-				return nil, err
-			}
-			status := "OK"
-			if p.FileExists(md5) {
-				status = "SKIP"
-			}
-			fmt.Printf("%s - %s %s - %s\n", levelStr, dir.Name(), md5, status)
-			if status == "OK" {
-				files = append(files, FileToUpload{
-					Dir:        rootPath,
-					Name:       dir.Name(),
-					CategoryId: parentCategoryId,
-				})
-			}
-			continue
+			stat.Add()
+			files <- file
 		}
-		dirname := norm.NFC.String(dir.Name())
-		categoryId, ok := categoriesId[dirname]
-		fmt.Printf("%s%s\n", levelStr, dirname)
-		if !ok {
-			var resp struct {
-				Id int `json:"id"`
-			}
-			err = p.Post("pwg.categories.add", &url.Values{
-				"name":   []string{strings.ReplaceAll(dirname, "'", `\'`)},
-				"parent": []string{fmt.Sprint(parentCategoryId)},
-			}, &resp)
-			if err != nil {
-				return nil, err
-			}
-			categoryId = resp.Id
-		}
-		newFiles, err := p.UploadTree(filepath.Join(rootPath, dirname), categoryId, level+1, filter)
-		if err != nil {
-			return nil, err
-		}
-		files = append(files, newFiles...)
 	}
 
-	return files, nil
+	return nil
+}
+
+func (p *Piwigo) CheckFiles(filesToCheck chan *FileToUpload, files chan *FileToUpload, stat *FileToUploadStat, nbJobs int) {
+	defer close(files)
+
+	wgChecker := &sync.WaitGroup{}
+	for i := 0; i < nbJobs; i++ {
+		wgChecker.Add(1)
+		go func() {
+			defer wgChecker.Done()
+			for file := range filesToCheck {
+				err := p.CheckUploadFile(file, stat)
+				if err != nil {
+					continue
+				}
+				files <- file
+			}
+		}()
+	}
+
+	wgChecker.Wait()
 }

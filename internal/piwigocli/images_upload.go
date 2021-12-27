@@ -40,12 +40,10 @@ func (c *ImagesUploadCommand) Execute(args []string) error {
 	}
 
 	stat := &piwigo.FileToUploadStat{
-		Progress: progressbar.DefaultBytes(1, "prepare"),
+		Progress: progressbar.DefaultBytes(1, "..."),
 	}
 	defer stat.Close()
-	stat.Add(file.Size())
-	stat.Refresh()
-
+	stat.Add()
 	err = p.Upload(file, stat, c.NbJobs, hasVideoJS)
 	if err != nil {
 		return err
