@@ -29,7 +29,7 @@ func (p *Piwigo) CheckUploadFile(file *FileToUpload, stat *FileToUploadStat) (er
 			stat.Fail()
 			stat.Check()
 			err = fmt.Errorf("%s: checksum error", file.FullPath())
-			stat.Error(file.FullPath(), err)
+			stat.Error("CheckUploadFile", file.FullPath(), err)
 			return
 		}
 
@@ -54,7 +54,7 @@ func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, 
 	wg := &sync.WaitGroup{}
 	chunks, err := Base64Chunker(file.FullPath())
 	if err != nil {
-		stat.Error(file.FullPath(), err)
+		stat.Error("Base64Chunker", file.FullPath(), err)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, 
 	err = p.Post("pwg.images.add", data, &resp)
 	if err != nil {
 		stat.Fail()
-		stat.Error(file.FullPath(), err)
+		stat.Error("Upload", file.FullPath(), err)
 		return
 	}
 
@@ -112,11 +112,11 @@ func (p *Piwigo) UploadChunk(file *FileToUpload, chunks chan *Base64ChunkResult,
 			if err == nil {
 				break
 			}
+			stat.Error(fmt.Sprintf("UploadChunk %d", i), file.FullPath(), err)
 		}
 		stat.Commit(chunk.Size)
 		if err != nil {
 			stat.Fail()
-			stat.Error(file.FullPath(), err)
 			*ok = false
 			return
 		}
@@ -136,19 +136,19 @@ func (p *Piwigo) ScanTree(
 	}
 	rootPath, err := filepath.Abs(rootPath)
 	if err != nil {
-		stat.Error(rootPath, err)
+		stat.Error("ScanTree Abs", rootPath, err)
 		return
 	}
 
 	categoriesId, err := p.CategoriesId(parentCategoryId)
 	if err != nil {
-		stat.Error(rootPath, err)
+		stat.Error("ScanTree CategoriesId", rootPath, err)
 		return
 	}
 
 	dirs, err := ioutil.ReadDir(rootPath)
 	if err != nil {
-		stat.Error(rootPath, err)
+		stat.Error("ScanTree Dir", rootPath, err)
 		return
 	}
 
@@ -166,7 +166,7 @@ func (p *Piwigo) ScanTree(
 					"parent": []string{fmt.Sprint(parentCategoryId)},
 				}, &resp)
 				if err != nil {
-					stat.Error(rootPath, err)
+					stat.Error("ScanTree Categories Add", rootPath, err)
 					return
 				}
 				categoryId = resp.Id

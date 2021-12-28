@@ -77,10 +77,10 @@ func (s *FileToUploadStat) Skip() {
 	s.mu.Unlock()
 }
 
-func (s *FileToUploadStat) Error(origin string, err error) error {
+func (s *FileToUploadStat) Error(origin string, filename string, err error) error {
 	s.mu.Lock()
 	s.Progress.Clear()
-	fmt.Println("%s: %s", origin, err)
+	fmt.Printf("[%s] %s: %s\n", origin, filename, err)
 	s.Progress.RenderBlank()
 	s.mu.Unlock()
 	return err
