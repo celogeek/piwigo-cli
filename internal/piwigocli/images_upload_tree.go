@@ -33,7 +33,7 @@ func (c *ImagesUploadTreeCommand) Execute(args []string) error {
 
 	go p.ScanTree(c.Dirname, c.CategoryId, 0, &status.UploadFileType, stat, filesToCheck)
 	go p.CheckFiles(filesToCheck, files, stat, 8)
-	p.UploadFiles(files, stat, hasVideoJS, 4)
+	p.UploadFiles(files, stat, hasVideoJS, 4, 2)
 
 	return nil
 }

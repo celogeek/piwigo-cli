@@ -68,6 +68,8 @@ func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, 
 		return
 	}
 
+	// lock this process for committing the file
+
 	exif, _ := Exif(file.FullPath())
 	var resp *FileUploadResult
 	data := &url.Values{}
@@ -80,10 +82,20 @@ func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, 
 	if file.CategoryId > 0 {
 		data.Set("categories", fmt.Sprint(file.CategoryId))
 	}
-	err = p.Post("pwg.images.add", data, &resp)
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for i := 0; i < 3; i++ {
+		err = p.Post("pwg.images.add", data, &resp)
+		if err == nil || err.Error() == "[Error 500] file already exists" {
+			err = nil
+			break
+		}
+		stat.Error(fmt.Sprintf("Upload %d", i), file.FullPath(), err)
+	}
+
 	if err != nil {
 		stat.Fail()
-		stat.Error("Upload", file.FullPath(), err)
 		return
 	}
 
@@ -161,10 +173,12 @@ func (p *Piwigo) ScanTree(
 				var resp struct {
 					Id int `json:"id"`
 				}
+				p.mu.Lock()
 				err = p.Post("pwg.categories.add", &url.Values{
 					"name":   []string{strings.ReplaceAll(dirname, "'", `\'`)},
 					"parent": []string{fmt.Sprint(parentCategoryId)},
 				}, &resp)
+				p.mu.Unlock()
 				if err != nil {
 					stat.Error("ScanTree Categories Add", rootPath, err)
 					return
@@ -209,9 +223,24 @@ func (p *Piwigo) CheckFiles(filesToCheck chan *FileToUpload, files chan *FileToU
 	wg.Wait()
 }
 
-func (p *Piwigo) UploadFiles(files chan *FileToUpload, stat *FileToUploadStat, hasVideoJS bool, nbJobs int) {
+func (p *Piwigo) UploadFiles(
+	files chan *FileToUpload,
+	stat *FileToUploadStat,
+	hasVideoJS bool,
+	nbJobs int,
+	nbJobsChunk int,
+) {
 	defer stat.Close()
-	for file := range files {
-		p.Upload(file, stat, nbJobs, hasVideoJS)
+
+	wg := &sync.WaitGroup{}
+	for i := 0; i < nbJobs; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for file := range files {
+				p.Upload(file, stat, nbJobsChunk, hasVideoJS)
+			}
+		}()
 	}
+	wg.Wait()
 }
