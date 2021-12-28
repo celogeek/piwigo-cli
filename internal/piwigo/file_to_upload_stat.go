@@ -20,7 +20,16 @@ type FileToUploadStat struct {
 }
 
 func (s *FileToUploadStat) Refresh() {
-	s.Progress.Describe(fmt.Sprintf("check:%d, upload:%d, skip:%d, failed:%d, total:%d", s.Checked, s.Uploaded, s.Skipped, s.Failed, s.Total))
+	s.Progress.Describe(fmt.Sprintf(
+		"%d / %d - check:%d, upload:%d, skip:%d, fail:%d",
+		s.Uploaded+s.Skipped+s.Failed,
+		s.Total,
+		s.Checked,
+		s.Uploaded,
+		s.Skipped,
+		s.Failed,
+	),
+	)
 }
 
 func (s *FileToUploadStat) Check() {
