@@ -13,9 +13,9 @@ import (
 	"strings"
 )
 
+var CHUNK_SIZE int64 = 1 * 1024 * 1024
 var CHUNK_BUFF_SIZE int64 = 32 * 1024
-var CHUNK_BUFF_COUNT int = 32
-var CHUNK_PRECOMPUTE_SIZE int = 8
+var CHUNK_BUFF_COUNT = CHUNK_SIZE / CHUNK_BUFF_SIZE
 
 func DumpResponse(v interface{}) (err error) {
 	b, err := json.MarshalIndent(v, "", "  ")
@@ -65,7 +65,7 @@ func Base64Chunker(filename string) (out chan *Base64ChunkResult, err error) {
 		return
 	}
 
-	out = make(chan *Base64ChunkResult, CHUNK_PRECOMPUTE_SIZE)
+	out = make(chan *Base64ChunkResult, 8)
 	go func() {
 		b := make([]byte, CHUNK_BUFF_SIZE)
 		defer f.Close()
@@ -76,7 +76,7 @@ func Base64Chunker(filename string) (out chan *Base64ChunkResult, err error) {
 				Position: position,
 			}
 			b64 := base64.NewEncoder(base64.StdEncoding, &bf.Buffer)
-			for i := 0; i < CHUNK_BUFF_COUNT; i++ {
+			for i := int64(0); i < CHUNK_BUFF_COUNT; i++ {
 				n, _ := f.Read(b)
 				if n == 0 {
 					ok = true

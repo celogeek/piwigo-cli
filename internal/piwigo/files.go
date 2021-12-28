@@ -211,16 +211,7 @@ func (p *Piwigo) CheckFiles(filesToCheck chan *FileToUpload, files chan *FileToU
 
 func (p *Piwigo) UploadFiles(files chan *FileToUpload, stat *FileToUploadStat, hasVideoJS bool, nbJobs int) {
 	defer stat.Close()
-
-	wg := &sync.WaitGroup{}
-	for i := 0; i < nbJobs; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for file := range files {
-				p.Upload(file, stat, 2, hasVideoJS)
-			}
-		}()
+	for file := range files {
+		p.Upload(file, stat, nbJobs, hasVideoJS)
 	}
-	wg.Wait()
 }

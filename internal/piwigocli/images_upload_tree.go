@@ -32,7 +32,7 @@ func (c *ImagesUploadTreeCommand) Execute(args []string) error {
 	files := make(chan *piwigo.FileToUpload, 1000)
 
 	go p.ScanTree(c.Dirname, c.CategoryId, 0, &status.UploadFileType, stat, filesToCheck)
-	go p.CheckFiles(filesToCheck, files, stat, 2)
+	go p.CheckFiles(filesToCheck, files, stat, 8)
 	p.UploadFiles(files, stat, hasVideoJS, 4)
 
 	return nil
