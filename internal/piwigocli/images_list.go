@@ -131,22 +131,25 @@ func (c *ImagesListCommand) Execute(args []string) error {
 	treeLinkChar := "│   "
 	treeMidChar := "├── "
 	treeEndChar := "└── "
+	treeAfterEndChar := "    "
 
 	treeView = func(t *Tree, prefix string) {
-		if prefix == "" {
-			fmt.Println(t.Name)
-		} else {
-			fmt.Println(prefix + treeMidChar + t.Name)
-		}
 		for i, st := range t.Children {
-			if i < len(t.Children)-1 {
+			switch i {
+			case len(t.Children) - 1:
+				fmt.Println(prefix + treeEndChar + st.Name)
+				treeView(st, prefix+treeAfterEndChar)
+			case 0:
+				fmt.Println(prefix + treeMidChar + st.Name)
 				treeView(st, prefix+treeLinkChar)
-			} else {
-				treeView(st, prefix+treeEndChar)
+			default:
+				fmt.Println(prefix + treeMidChar + st.Name)
+				treeView(st, prefix+treeLinkChar)
 			}
 		}
 	}
 
+	fmt.Println(treeMap[""].Name)
 	treeView(treeMap[""], "")
 
 	return nil
