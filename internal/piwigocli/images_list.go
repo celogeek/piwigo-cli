@@ -3,8 +3,8 @@ package piwigocli
 import (
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
@@ -59,7 +59,9 @@ func (c *ImagesListCommand) Execute(args []string) error {
 		filter = regexp.MustCompile("(?i)" + c.Filter)
 	}
 
-	var results []string
+	rootTree := piwigotools.NewTree()
+	cache := map[string]piwigotools.Tree{}
+
 	bar := progressbar.Default(1, "listing")
 	for page := 0; ; page++ {
 		var resp ImagesListResult
@@ -78,16 +80,30 @@ func (c *ImagesListCommand) Execute(args []string) error {
 		}
 
 		for _, image := range resp.Images {
-			for _, category := range image.Categories {
-				cat, ok := categories[category.Id]
-				if !ok {
+			for _, cat := range image.Categories {
+				categoryPath := strings.Split(categories[cat.Id].Name[len(rootCatName):], " / ")
+				if !filter.MatchString(
+					filepath.Join(
+						filepath.Join(categoryPath...),
+						image.Filename,
+					),
+				) {
 					continue
 				}
-				catName := strings.ReplaceAll(cat.Name[len(rootCatName):], " / ", "/")
-				filename := fmt.Sprintf("%s/%s", catName, image.Filename)
-				if filter.MatchString(filename) {
-					results = append(results, filename)
+				curpath := ""
+				cur := rootTree
+				for _, path := range categoryPath {
+					curpath = filepath.Join(curpath, path)
+					node, ok := cache[curpath]
+					switch ok {
+					case true:
+						cur = node
+					case false:
+						cur = cur.AddNode(path)
+						cache[curpath] = cur
+					}
 				}
+				cur.AddNode(image.Filename)
 			}
 			bar.Add(1)
 		}
@@ -98,61 +114,66 @@ func (c *ImagesListCommand) Execute(args []string) error {
 	}
 	bar.Close()
 
-	sort.Strings(results)
-
-	if !c.Tree {
-		for _, r := range results {
-			fmt.Println(r)
-		}
-		return nil
+	results := rootTree.FlatView()
+	for filename := range results {
+		fmt.Println(filename)
 	}
 
-	type Tree struct {
-		Name     string
-		Children []*Tree
-	}
+	// sort.Strings(results)
 
-	treeMap := make(map[string]*Tree)
-	treeMap[""] = &Tree{Name: "."}
+	// if !c.Tree {
+	// 	for _, r := range results {
+	// 		fmt.Println(r)
+	// 	}
+	// 	return nil
+	// }
 
-	for _, r := range results {
-		parentpath := ""
-		fullpath := ""
-		for _, s := range strings.Split(r, "/") {
-			parentpath = fullpath
-			fullpath += s + "/"
-			if _, ok := treeMap[fullpath]; ok {
-				continue
-			}
-			treeMap[fullpath] = &Tree{Name: s}
-			treeMap[parentpath].Children = append(treeMap[parentpath].Children, treeMap[fullpath])
-		}
-	}
+	// type Tree struct {
+	// 	Name     string
+	// 	Children []*Tree
+	// }
 
-	var treeView func(*Tree, string)
-	treeLinkChar := "│   "
-	treeMidChar := "├── "
-	treeEndChar := "└── "
-	treeAfterEndChar := "    "
+	// treeMap := make(map[string]*Tree)
+	// treeMap[""] = &Tree{Name: "."}
 
-	treeView = func(t *Tree, prefix string) {
-		for i, st := range t.Children {
-			switch i {
-			case len(t.Children) - 1:
-				fmt.Println(prefix + treeEndChar + st.Name)
-				treeView(st, prefix+treeAfterEndChar)
-			case 0:
-				fmt.Println(prefix + treeMidChar + st.Name)
-				treeView(st, prefix+treeLinkChar)
-			default:
-				fmt.Println(prefix + treeMidChar + st.Name)
-				treeView(st, prefix+treeLinkChar)
-			}
-		}
-	}
+	// for _, r := range results {
+	// 	parentpath := ""
+	// 	fullpath := ""
+	// 	for _, s := range strings.Split(r, "/") {
+	// 		parentpath = fullpath
+	// 		fullpath += s + "/"
+	// 		if _, ok := treeMap[fullpath]; ok {
+	// 			continue
+	// 		}
+	// 		treeMap[fullpath] = &Tree{Name: s}
+	// 		treeMap[parentpath].Children = append(treeMap[parentpath].Children, treeMap[fullpath])
+	// 	}
+	// }
 
-	fmt.Println(treeMap[""].Name)
-	treeView(treeMap[""], "")
+	// var treeView func(*Tree, string)
+	// treeLinkChar := "│   "
+	// treeMidChar := "├── "
+	// treeEndChar := "└── "
+	// treeAfterEndChar := "    "
+
+	// treeView = func(t *Tree, prefix string) {
+	// 	for i, st := range t.Children {
+	// 		switch i {
+	// 		case len(t.Children) - 1:
+	// 			fmt.Println(prefix + treeEndChar + st.Name)
+	// 			treeView(st, prefix+treeAfterEndChar)
+	// 		case 0:
+	// 			fmt.Println(prefix + treeMidChar + st.Name)
+	// 			treeView(st, prefix+treeLinkChar)
+	// 		default:
+	// 			fmt.Println(prefix + treeMidChar + st.Name)
+	// 			treeView(st, prefix+treeLinkChar)
+	// 		}
+	// 	}
+	// }
+
+	// fmt.Println(treeMap[""].Name)
+	// treeView(treeMap[""], "")
 
 	return nil
 }
