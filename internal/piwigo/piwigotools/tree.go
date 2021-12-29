@@ -8,6 +8,7 @@ import (
 type Tree interface {
 	AddNode(string) Tree
 	FlatView() chan string
+	TreeView() chan string
 }
 
 type node struct {
@@ -48,6 +49,41 @@ func (t *node) FlatView() (out chan string) {
 		}
 
 		flatten("", t)
+	}()
+	return out
+}
+
+func (t *node) TreeView() (out chan string) {
+	out = make(chan string)
+	treeLinkChar := "│   "
+	treeMidChar := "├── "
+	treeEndChar := "└── "
+	treeAfterEndChar := "    "
+
+	go func() {
+		defer close(out)
+
+		var tree func(string, *node)
+
+		tree = func(prefix string, t *node) {
+			for i, st := range t.Children {
+				switch i {
+				case len(t.Children) - 1:
+					out <- prefix + treeEndChar + st.Name
+					tree(prefix+treeAfterEndChar, st)
+				case 0:
+					out <- prefix + treeMidChar + st.Name
+					tree(prefix+treeLinkChar, st)
+				default:
+					out <- prefix + treeMidChar + st.Name
+					tree(prefix+treeLinkChar, st)
+				}
+			}
+		}
+
+		out <- t.Name
+		tree("", t)
+
 	}()
 	return out
 }
