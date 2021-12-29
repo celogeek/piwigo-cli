@@ -3,15 +3,17 @@ package piwigo
 import (
 	"errors"
 	"net/url"
+
+	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 )
 
 type StatusResponse struct {
-	User           string         `json:"username"`
-	Role           string         `json:"status"`
-	Version        string         `json:"version"`
-	Token          string         `json:"pwg_token"`
-	UploadFileType UploadFileType `json:"upload_file_types"`
-	Plugins        ActivePlugin   `json:"plugins"`
+	User           string                     `json:"username"`
+	Role           string                     `json:"status"`
+	Version        string                     `json:"version"`
+	Token          string                     `json:"pwg_token"`
+	UploadFileType piwigotools.UploadFileType `json:"upload_file_types"`
+	Plugins        piwigotools.ActivePlugin   `json:"plugins"`
 }
 
 func (p *Piwigo) GetStatus() (*StatusResponse, error) {

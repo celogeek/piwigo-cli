@@ -7,16 +7,15 @@ import (
 	"strings"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
+	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
-type ImagesDetailsCommand struct {
+type ImageDetailsCommand struct {
 	Id string `short:"i" long:"id" description:"ID of the images" required:"true"`
 }
 
-type GetImagesDetailsResponse piwigo.ImagesDetails
-
-func (c *ImagesDetailsCommand) Execute(args []string) error {
+func (c *ImageDetailsCommand) Execute(args []string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err
@@ -27,7 +26,7 @@ func (c *ImagesDetailsCommand) Execute(args []string) error {
 		return err
 	}
 
-	var resp GetImagesDetailsResponse
+	var resp piwigotools.ImageDetails
 	if err := p.Post("pwg.images.getInfo", &url.Values{
 		"image_id": []string{c.Id},
 	}, &resp); err != nil {

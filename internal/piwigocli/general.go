@@ -12,7 +12,14 @@ type GetInfosCommand struct {
 }
 
 type GetInfosResponse struct {
-	Infos piwigo.Infos `json:"infos"`
+	Infos Infos `json:"infos"`
+}
+
+type Infos []Info
+
+type Info struct {
+	Name  string      `json:"name"`
+	Value interface{} `json:"value"`
 }
 
 var getInfosCommand GetInfosCommand

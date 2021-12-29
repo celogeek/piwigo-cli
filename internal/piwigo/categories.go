@@ -4,66 +4,56 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+
+	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 )
 
 type CategoriesResult struct {
-	Categories `json:"categories"`
+	Categories piwigotools.Categories `json:"categories"`
 }
 
-type Categories []Category
+func (p *Piwigo) Categories() (piwigotools.Categories, error) {
+	var result CategoriesResult
 
-type Category struct {
-	Id          int    `json:"id"`
-	Name        string `json:"name"`
-	ImagesCount int    `json:"nb_images"`
-	Url         string `json:"url"`
-}
-
-func (p *Piwigo) Categories() (map[int]Category, error) {
-	var categories CategoriesResult
-
-	err := p.Post("pwg.categories.getList", &url.Values{
+	if err := p.Post("pwg.categories.getList", &url.Values{
 		"fullname":  []string{"true"},
 		"recursive": []string{"true"},
-	}, &categories)
+	}, &result); err != nil {
+		return nil, err
+	}
+	return result.Categories, nil
+}
+
+func (p *Piwigo) CategoryFromId() (map[int]piwigotools.Category, error) {
+	categories, err := p.Categories()
 	if err != nil {
 		return nil, err
 	}
-
-	result := map[int]Category{}
-
-	for _, category := range categories.Categories {
+	result := map[int]piwigotools.Category{}
+	for _, category := range categories {
 		result[category.Id] = category
 	}
 	return result, nil
 }
 
-func (c Categories) Names() []string {
-	names := []string{}
-	for _, category := range c {
-		names = append(names, category.Name)
-	}
-	return names
-}
-
-func (p *Piwigo) CategoriesId(catId int) (map[string]int, error) {
-	var categories CategoriesResult
+func (p *Piwigo) CategoryFromName(catId int) (map[string]piwigotools.Category, error) {
+	var results CategoriesResult
 
 	err := p.Post("pwg.categories.getList", &url.Values{
 		"cat_id": []string{fmt.Sprint(catId)},
-	}, &categories)
+	}, &results)
 	if err != nil {
 		return nil, err
 	}
 
-	categoriesId := make(map[string]int)
+	categoriesId := map[string]piwigotools.Category{}
 	ok := false
-	for _, category := range categories.Categories {
+	for _, category := range results.Categories {
 		switch category.Id {
 		case catId:
 			ok = true
 		default:
-			categoriesId[category.Name] = category.Id
+			categoriesId[category.Name] = category
 		}
 	}
 	if !ok {

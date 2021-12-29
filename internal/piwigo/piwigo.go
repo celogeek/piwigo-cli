@@ -10,10 +10,3 @@ type Piwigo struct {
 
 	mu sync.Mutex
 }
-
-type PiwigoResult struct {
-	Stat       string      `json:"stat"`
-	Err        int         `json:"err"`
-	ErrMessage string      `json:"message"`
-	Result     interface{} `json:"result"`
-}

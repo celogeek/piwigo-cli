@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
+	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 	"github.com/schollz/progressbar/v3"
 )
 
@@ -33,13 +34,13 @@ func (c *ImagesUploadCommand) Execute(args []string) error {
 
 	_, hasVideoJS := status.Plugins["piwigo-videojs"]
 
-	file := &piwigo.FileToUpload{
+	file := &piwigotools.FileToUpload{
 		Dir:        filepath.Dir(c.Filename),
 		Name:       filepath.Base(c.Filename),
 		CategoryId: c.CategoryId,
 	}
 
-	stat := &piwigo.FileToUploadStat{
+	stat := &piwigotools.FileToUploadStat{
 		Progress: progressbar.DefaultBytes(1, "..."),
 	}
 	defer stat.Close()

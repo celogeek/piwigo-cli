@@ -8,8 +8,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 	"golang.org/x/text/unicode/norm"
 )
+
+type FileUploadResult struct {
+	ImageId int    `json:"image_id"`
+	Url     string `json:"url"`
+}
 
 func (p *Piwigo) FileExists(md5 string) bool {
 	var resp map[string]*string
@@ -19,11 +25,10 @@ func (p *Piwigo) FileExists(md5 string) bool {
 	}, &resp); err != nil {
 		return false
 	}
-
 	return resp[md5] != nil
 }
 
-func (p *Piwigo) CheckUploadFile(file *FileToUpload, stat *FileToUploadStat) (err error) {
+func (p *Piwigo) CheckUploadFile(file *piwigotools.FileToUpload, stat *piwigotools.FileToUploadStat) (err error) {
 	if !file.Checked() {
 		if file.MD5() == "" {
 			stat.Fail()
@@ -46,13 +51,13 @@ func (p *Piwigo) CheckUploadFile(file *FileToUpload, stat *FileToUploadStat) (er
 	return nil
 }
 
-func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, hasVideoJS bool) {
+func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileToUploadStat, nbJobs int, hasVideoJS bool) {
 	err := p.CheckUploadFile(file, stat)
 	if err != nil {
 		return
 	}
 	wg := &sync.WaitGroup{}
-	chunks, err := Base64Chunker(file.FullPath())
+	chunks, err := piwigotools.Base64Chunker(file.FullPath())
 	if err != nil {
 		stat.Error("Base64Chunker", file.FullPath(), err)
 		return
@@ -70,7 +75,7 @@ func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, 
 
 	// lock this process for committing the file
 
-	exif, _ := Exif(file.FullPath())
+	exif, _ := piwigotools.Exif(file.FullPath())
 	var resp *FileUploadResult
 	data := &url.Values{}
 	data.Set("original_sum", file.MD5())
@@ -109,7 +114,7 @@ func (p *Piwigo) Upload(file *FileToUpload, stat *FileToUploadStat, nbJobs int, 
 	stat.Done()
 }
 
-func (p *Piwigo) UploadChunk(file *FileToUpload, chunks chan *Base64ChunkResult, wg *sync.WaitGroup, stat *FileToUploadStat, ok *bool) {
+func (p *Piwigo) UploadChunk(file *piwigotools.FileToUpload, chunks chan *piwigotools.Base64Chunk, wg *sync.WaitGroup, stat *piwigotools.FileToUploadStat, ok *bool) {
 	defer wg.Done()
 	for chunk := range chunks {
 		var err error
@@ -139,9 +144,9 @@ func (p *Piwigo) ScanTree(
 	rootPath string,
 	parentCategoryId int,
 	level int,
-	filter *UploadFileType,
-	stat *FileToUploadStat,
-	files chan *FileToUpload,
+	filter *piwigotools.UploadFileType,
+	stat *piwigotools.FileToUploadStat,
+	files chan *piwigotools.FileToUpload,
 ) {
 	if level == 0 {
 		defer close(files)
@@ -152,7 +157,7 @@ func (p *Piwigo) ScanTree(
 		return
 	}
 
-	categoriesId, err := p.CategoriesId(parentCategoryId)
+	categoryFromName, err := p.CategoryFromName(parentCategoryId)
 	if err != nil {
 		stat.Error("ScanTree CategoriesId", rootPath, err)
 		return
@@ -168,26 +173,23 @@ func (p *Piwigo) ScanTree(
 		switch dir.IsDir() {
 		case true: // Directory
 			dirname := norm.NFC.String(dir.Name())
-			categoryId, ok := categoriesId[dirname]
+			category, ok := categoryFromName[dirname]
 			if !ok {
-				var resp struct {
-					Id int `json:"id"`
-				}
+				category = piwigotools.Category{}
 				p.mu.Lock()
 				err = p.Post("pwg.categories.add", &url.Values{
 					"name":   []string{strings.ReplaceAll(dirname, "'", `\'`)},
 					"parent": []string{fmt.Sprint(parentCategoryId)},
-				}, &resp)
+				}, &category)
 				p.mu.Unlock()
 				if err != nil {
 					stat.Error("ScanTree Categories Add", rootPath, err)
 					return
 				}
-				categoryId = resp.Id
 			}
-			p.ScanTree(filepath.Join(rootPath, dirname), categoryId, level+1, filter, stat, files)
+			p.ScanTree(filepath.Join(rootPath, dirname), category.Id, level+1, filter, stat, files)
 		case false: // File
-			file := &FileToUpload{
+			file := &piwigotools.FileToUpload{
 				Dir:        rootPath,
 				Name:       dir.Name(),
 				CategoryId: parentCategoryId,
@@ -202,7 +204,7 @@ func (p *Piwigo) ScanTree(
 
 }
 
-func (p *Piwigo) CheckFiles(filesToCheck chan *FileToUpload, files chan *FileToUpload, stat *FileToUploadStat, nbJobs int) {
+func (p *Piwigo) CheckFiles(filesToCheck chan *piwigotools.FileToUpload, files chan *piwigotools.FileToUpload, stat *piwigotools.FileToUploadStat, nbJobs int) {
 	defer close(files)
 
 	wg := &sync.WaitGroup{}
@@ -224,8 +226,8 @@ func (p *Piwigo) CheckFiles(filesToCheck chan *FileToUpload, files chan *FileToU
 }
 
 func (p *Piwigo) UploadFiles(
-	files chan *FileToUpload,
-	stat *FileToUploadStat,
+	files chan *piwigotools.FileToUpload,
+	stat *piwigotools.FileToUploadStat,
 	hasVideoJS bool,
 	nbJobs int,
 	nbJobsChunk int,

@@ -1,4 +1,4 @@
-package piwigo
+package piwigotools
 
 import (
 	"fmt"

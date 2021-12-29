@@ -14,8 +14,6 @@ type MethodDetailsCommand struct {
 	MethodName string `short:"m" long:"method-name" description:"Method name to details"`
 }
 
-type MethodDetailsResult piwigo.MethodDetails
-
 func (c *MethodDetailsCommand) Execute(args []string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
@@ -27,7 +25,7 @@ func (c *MethodDetailsCommand) Execute(args []string) error {
 		return err
 	}
 
-	var result MethodDetailsResult
+	var result MethodDetails
 
 	if err := p.Post("reflection.getMethodDetails", &url.Values{
 		"methodName": []string{c.MethodName},

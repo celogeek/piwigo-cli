@@ -1,7 +1,6 @@
 package piwigocli
 
 import (
-	"net/url"
 	"os"
 	"regexp"
 
@@ -11,10 +10,6 @@ import (
 
 type CategoriesListCommand struct {
 	Filter string `short:"x" long:"filter" description:"Regexp filter"`
-}
-
-type GetCategoriesListResponse struct {
-	Categories piwigo.Categories `json:"categories"`
 }
 
 func (c *CategoriesListCommand) Execute(args []string) error {
@@ -28,12 +23,8 @@ func (c *CategoriesListCommand) Execute(args []string) error {
 		return err
 	}
 
-	var resp GetCategoriesListResponse
-
-	if err := p.Post("pwg.categories.getList", &url.Values{
-		"recursive": []string{"true"},
-		"fullname":  []string{"true"},
-	}, &resp); err != nil {
+	categories, err := p.Categories()
+	if err != nil {
 		return err
 	}
 
@@ -44,7 +35,7 @@ func (c *CategoriesListCommand) Execute(args []string) error {
 
 	t := table.NewWriter()
 	t.AppendHeader(table.Row{"Id", "Name", "Images", "Url"})
-	for _, category := range resp.Categories {
+	for _, category := range categories {
 		if filter.MatchString(category.Name) {
 			t.AppendRow(table.Row{
 				category.Id,

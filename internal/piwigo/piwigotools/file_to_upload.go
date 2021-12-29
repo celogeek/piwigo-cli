@@ -1,15 +1,10 @@
-package piwigo
+package piwigotools
 
 import (
 	"os"
 	"path/filepath"
 	"strings"
 )
-
-type FileUploadResult struct {
-	ImageId int    `json:"image_id"`
-	Url     string `json:"url"`
-}
 
 type FileToUpload struct {
 	Dir        string

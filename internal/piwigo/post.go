@@ -8,7 +8,16 @@ import (
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 )
+
+type PiwigoResult struct {
+	Stat       string      `json:"stat"`
+	Err        int         `json:"err"`
+	ErrMessage string      `json:"message"`
+	Result     interface{} `json:"result"`
+}
 
 func (p *Piwigo) BuildUrl(method string) (string, error) {
 
@@ -89,7 +98,7 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 			return err
 		}
 
-		DumpResponse(RawResult)
+		piwigotools.DumpResponse(RawResult)
 	}
 
 	if Result.Stat != "ok" {

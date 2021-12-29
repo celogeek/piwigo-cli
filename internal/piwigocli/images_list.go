@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
+	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 	"github.com/schollz/progressbar/v3"
 )
 
@@ -19,7 +20,7 @@ type ImagesListCommand struct {
 }
 
 type ImagesListResult struct {
-	Images []*piwigo.ImagesDetails `json:"images"`
+	Images []*piwigotools.ImageDetails `json:"images"`
 	Paging struct {
 		Count   int `json:"count"`
 		Page    int `json:"page"`
@@ -39,7 +40,7 @@ func (c *ImagesListCommand) Execute(args []string) error {
 		return err
 	}
 
-	categories, err := p.Categories()
+	categories, err := p.CategoryFromId()
 	if err != nil {
 		return err
 	}

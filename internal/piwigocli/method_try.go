@@ -1,7 +1,12 @@
 package piwigocli
 
 import (
+	"errors"
+	"net/url"
+	"strings"
+
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
+	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 )
 
 type MethodTryCommand struct {
@@ -20,19 +25,31 @@ func (c *MethodTryCommand) Execute(args []string) error {
 	}
 
 	var result interface{}
-	params, err := piwigo.ArgsToForm(args)
+	params, err := ArgsToForm(args)
 	if err != nil {
 		return err
 	}
 
 	if err := p.Post(c.MethodName, params, &result); err != nil {
-		piwigo.DumpResponse(params)
+		piwigotools.DumpResponse(params)
 		return err
 	}
 
-	piwigo.DumpResponse(map[string]interface{}{
+	piwigotools.DumpResponse(map[string]interface{}{
 		"params": params,
 		"result": result,
 	})
 	return nil
+}
+
+func ArgsToForm(args []string) (*url.Values, error) {
+	params := &url.Values{}
+	for _, arg := range args {
+		r := strings.SplitN(arg, "=", 2)
+		if len(r) != 2 {
+			return nil, errors.New("args should be key=value")
+		}
+		params.Add(r[0], strings.ReplaceAll(r[1], "'", `\'`))
+	}
+	return params, nil
 }

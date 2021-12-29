@@ -2,6 +2,7 @@ package piwigocli
 
 import (
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
+	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 	"github.com/schollz/progressbar/v3"
 )
 
@@ -23,13 +24,13 @@ func (c *ImagesUploadTreeCommand) Execute(args []string) error {
 	}
 	_, hasVideoJS := status.Plugins["piwigo-videojs"]
 
-	stat := &piwigo.FileToUploadStat{
+	stat := &piwigotools.FileToUploadStat{
 		Progress: progressbar.DefaultBytes(1, "..."),
 	}
 
 	defer stat.Close()
-	filesToCheck := make(chan *piwigo.FileToUpload, 1000)
-	files := make(chan *piwigo.FileToUpload, 1000)
+	filesToCheck := make(chan *piwigotools.FileToUpload, 1000)
+	files := make(chan *piwigotools.FileToUpload, 1000)
 
 	go p.ScanTree(c.Dirname, c.CategoryId, 0, &status.UploadFileType, stat, filesToCheck)
 	go p.CheckFiles(filesToCheck, files, stat, 8)
