@@ -103,6 +103,7 @@ func (c *ImagesListCommand) Execute(args []string) error {
 		for _, r := range results {
 			fmt.Println(r)
 		}
+		return nil
 	}
 
 	type Tree struct {
