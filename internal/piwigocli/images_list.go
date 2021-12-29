@@ -15,6 +15,7 @@ type ImagesListCommand struct {
 	Recursive  bool   `short:"r" long:"recursive" description:"recursive listing"`
 	CategoryId int    `short:"c" long:"category" description:"list for this category"`
 	Filter     string `short:"x" long:"filter" description:"Regexp filter"`
+	Tree       bool   `short:"t" long:"tree" description:"Tree view"`
 }
 
 type ImagesListResult struct {
@@ -57,7 +58,7 @@ func (c *ImagesListCommand) Execute(args []string) error {
 		filter = regexp.MustCompile("(?i)" + c.Filter)
 	}
 
-	var result []string
+	var results []string
 	bar := progressbar.Default(1, "listing")
 	for page := 0; ; page++ {
 		var resp ImagesListResult
@@ -84,7 +85,7 @@ func (c *ImagesListCommand) Execute(args []string) error {
 				catName := strings.ReplaceAll(cat.Name[len(rootCatName):], " / ", "/")
 				filename := fmt.Sprintf("%s/%s", catName, image.Filename)
 				if filter.MatchString(filename) {
-					result = append(result, filename)
+					results = append(results, filename)
 				}
 			}
 			bar.Add(1)
@@ -96,10 +97,57 @@ func (c *ImagesListCommand) Execute(args []string) error {
 	}
 	bar.Close()
 
-	sort.Strings(result)
-	for _, r := range result {
-		fmt.Println(r)
+	sort.Strings(results)
+
+	if !c.Tree {
+		for _, r := range results {
+			fmt.Println(r)
+		}
 	}
+
+	type Tree struct {
+		Name     string
+		Children []*Tree
+	}
+
+	treeMap := make(map[string]*Tree)
+	treeMap[""] = &Tree{Name: "."}
+
+	for _, r := range results {
+		parentpath := ""
+		fullpath := ""
+		for _, s := range strings.Split(r, "/") {
+			parentpath = fullpath
+			fullpath += s + "/"
+			if _, ok := treeMap[fullpath]; ok {
+				continue
+			}
+			treeMap[fullpath] = &Tree{Name: s}
+			treeMap[parentpath].Children = append(treeMap[parentpath].Children, treeMap[fullpath])
+		}
+	}
+
+	var treeView func(*Tree, string)
+	treeLinkChar := "│   "
+	treeMidChar := "├── "
+	treeEndChar := "└── "
+
+	treeView = func(t *Tree, prefix string) {
+		if prefix == "" {
+			fmt.Println(t.Name)
+		} else {
+			fmt.Println(prefix + treeMidChar + t.Name)
+		}
+		for i, st := range t.Children {
+			if i < len(t.Children)-1 {
+				treeView(st, prefix+treeLinkChar)
+			} else {
+				treeView(st, prefix+treeEndChar)
+			}
+		}
+	}
+
+	treeView(treeMap[""], "")
 
 	return nil
 }
