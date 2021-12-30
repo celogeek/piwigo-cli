@@ -60,7 +60,6 @@ func (c *ImagesListCommand) Execute(args []string) error {
 	}
 
 	rootTree := piwigotools.NewTree()
-	cache := map[string]piwigotools.Tree{}
 
 	bar := progressbar.Default(1, "listing")
 	for page := 0; ; page++ {
@@ -81,29 +80,14 @@ func (c *ImagesListCommand) Execute(args []string) error {
 
 		for _, image := range resp.Images {
 			for _, cat := range image.Categories {
-				categoryPath := strings.Split(categories[cat.Id].Name[len(rootCatName):], " / ")
-				if !filter.MatchString(
-					filepath.Join(
-						filepath.Join(categoryPath...),
-						image.Filename,
-					),
-				) {
+				filename := filepath.Join(
+					strings.ReplaceAll(categories[cat.Id].Name[len(rootCatName):], " / ", "/"),
+					image.Filename,
+				)
+				if !filter.MatchString(filename) {
 					continue
 				}
-				curpath := ""
-				cur := rootTree
-				for _, path := range categoryPath {
-					curpath = filepath.Join(curpath, path)
-					node, ok := cache[curpath]
-					switch ok {
-					case true:
-						cur = node
-					case false:
-						cur = cur.AddNode(path)
-						cache[curpath] = cur
-					}
-				}
-				cur.AddNode(image.Filename)
+				rootTree.AddPath(filename)
 			}
 			bar.Add(1)
 		}
