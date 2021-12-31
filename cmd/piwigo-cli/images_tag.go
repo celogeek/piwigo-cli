@@ -26,14 +26,23 @@ func (c *ImagesTagCommand) Execute(args []string) error {
 		return err
 	}
 
-	var resp piwigotools.ImageDetails
+	var imgDetails piwigotools.ImageDetails
 	if err := p.Post("pwg.images.getInfo", &url.Values{
 		"image_id": []string{fmt.Sprint(c.Id)},
-	}, &resp); err != nil {
+	}, &imgDetails); err != nil {
 		return err
 	}
 
-	img, err := resp.Preview(25)
+	var tags struct {
+		Tags piwigotools.Tags `json:"tags"`
+	}
+	if err := p.Post("pwg.tags.getAdminList", &url.Values{
+		"image_id": []string{fmt.Sprint(c.Id)},
+	}, &tags); err != nil {
+		return err
+	}
+
+	img, err := imgDetails.Preview(25)
 	if err != nil {
 		return err
 	}
@@ -41,12 +50,12 @@ func (c *ImagesTagCommand) Execute(args []string) error {
 	fmt.Println(img)
 	t := table.NewWriter()
 	t.AppendRows([]table.Row{
-		{"Name", resp.Name},
-		{"Url", resp.Url},
-		{"CreatedAt", resp.DateCreation},
-		{"Size", fmt.Sprintf("%d x %d", resp.Width, resp.Height)},
-		{"Categories", strings.Join(resp.Categories.Names(), "\n")},
-		{"Tags", strings.Join(resp.Tags.NamesWithAgeAt(resp.DateCreation), "\n")},
+		{"Name", imgDetails.Name},
+		{"Url", imgDetails.Url},
+		{"CreatedAt", imgDetails.DateCreation},
+		{"Size", fmt.Sprintf("%d x %d", imgDetails.Width, imgDetails.Height)},
+		{"Categories", strings.Join(imgDetails.Categories.Names(), "\n")},
+		{"Tags", strings.Join(imgDetails.Tags.NamesWithAgeAt(&imgDetails.DateCreation), "\n")},
 	})
 
 	t.SetOutputMirror(os.Stdout)
