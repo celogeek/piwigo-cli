@@ -12,7 +12,7 @@ import (
 )
 
 type ImageDetailsCommand struct {
-	Id string `short:"i" long:"id" description:"ID of the images" required:"true"`
+	Id int `short:"i" long:"id" description:"ID of the images" required:"true"`
 }
 
 func (c *ImageDetailsCommand) Execute(args []string) error {
@@ -28,7 +28,7 @@ func (c *ImageDetailsCommand) Execute(args []string) error {
 
 	var resp piwigotools.ImageDetails
 	if err := p.Post("pwg.images.getInfo", &url.Values{
-		"image_id": []string{c.Id},
+		"image_id": []string{fmt.Sprint(c.Id)},
 	}, &resp); err != nil {
 		return err
 	}
