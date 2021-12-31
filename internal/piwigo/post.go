@@ -1,9 +1,10 @@
 package piwigo
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -48,7 +49,7 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 		Result: resp,
 	}
 
-	var raw []byte
+	raw := bytes.NewBuffer([]byte{})
 
 	for i := 0; i < 3; i++ {
 		req, err := http.NewRequest("POST", Url, strings.NewReader(encodedForm))
@@ -65,14 +66,14 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 		if err != nil {
 			continue
 		}
+		defer r.Body.Close()
 
-		raw, err := ioutil.ReadAll(r.Body)
-		r.Body.Close()
+		_, err = io.Copy(raw, r.Body)
 		if err != nil {
 			continue
 		}
 
-		err = json.Unmarshal(raw, &Result)
+		err = json.Unmarshal(raw.Bytes(), &Result)
 		if err != nil {
 			continue
 		}
@@ -93,7 +94,7 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 
 	if os.Getenv("DEBUG") == "1" {
 		var RawResult interface{}
-		err = json.Unmarshal(raw, RawResult)
+		err = json.Unmarshal(raw.Bytes(), &RawResult)
 		if err != nil {
 			return err
 		}
