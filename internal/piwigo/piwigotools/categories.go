@@ -10,9 +10,9 @@ type Category struct {
 }
 
 func (c *Categories) Names() []string {
-	names := []string{}
-	for _, category := range *c {
-		names = append(names, category.Name)
+	names := make([]string, len(*c))
+	for i, category := range *c {
+		names[i] = category.Name
 	}
 	return names
 }

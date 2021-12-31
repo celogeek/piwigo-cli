@@ -17,13 +17,13 @@ type Tag struct {
 }
 
 func (c Tags) NamesWithAgeAt(createdAt TimeResult) []string {
-	names := []string{}
-	for _, category := range c {
+	names := make([]string, len(c))
+	for i, category := range c {
 		bd := category.Birthdate.AgeAt(createdAt)
 		if bd != "" {
-			names = append(names, fmt.Sprintf("%s (%s)", category.Name, bd))
+			names[i] = fmt.Sprintf("%s (%s)", category.Name, bd)
 		} else {
-			names = append(names, category.Name)
+			names[i] = category.Name
 		}
 	}
 	return names
