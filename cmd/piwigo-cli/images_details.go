@@ -59,7 +59,6 @@ func (c *ImageDetailsCommand) Execute(args []string) error {
 		{"Filesize", resp.Filesize},
 		{"Categories", strings.Join(resp.Categories.Names(), "\n")},
 		{"Tags", strings.Join(resp.Tags.NamesWithAgeAt(resp.DateCreation), "\n")},
-		// {"Derivatives", resp.Derivatives},
 	})
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleLight)
