@@ -1,4 +1,4 @@
-package piwigocli
+package main
 
 type ImagesGroup struct {
 	List       ImagesListCommand       `command:"list" description:"List of images"`

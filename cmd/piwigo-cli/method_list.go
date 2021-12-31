@@ -1,4 +1,4 @@
-package piwigocli
+package main
 
 import (
 	"encoding/json"

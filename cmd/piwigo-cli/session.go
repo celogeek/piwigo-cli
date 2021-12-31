@@ -1,4 +1,4 @@
-package piwigocli
+package main
 
 type SessionGroup struct {
 	Login  SessionLoginCommand  `command:"login" description:"Initialize a connection to a piwigo instance"`

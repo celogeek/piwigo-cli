@@ -1,4 +1,4 @@
-package piwigocli
+package main
 
 import (
 	"github.com/celogeek/piwigo-cli/internal/piwigo"

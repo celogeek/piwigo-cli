@@ -1,4 +1,4 @@
-package piwigocli
+package main
 
 type MethodGroup struct {
 	List    MethodListCommand    `command:"list" description:"List of available methods"`

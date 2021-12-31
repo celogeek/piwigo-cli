@@ -14,8 +14,8 @@ type Tree interface {
 }
 
 type node struct {
-	Name     string
-	children map[string]*node
+	Name  string
+	Nodes map[string]*node
 }
 
 func NewTree() Tree {
@@ -25,13 +25,13 @@ func NewTree() Tree {
 }
 
 func (t *node) Add(name string) Tree {
-	if t.children == nil {
-		t.children = map[string]*node{}
+	if t.Nodes == nil {
+		t.Nodes = map[string]*node{}
 	}
-	n, ok := t.children[name]
+	n, ok := t.Nodes[name]
 	if !ok {
 		n = &node{Name: name}
-		t.children[name] = n
+		t.Nodes[name] = n
 	}
 	return n
 }
@@ -44,9 +44,9 @@ func (t *node) AddPath(path string) Tree {
 }
 
 func (t *node) Children() []*node {
-	childs := make([]*node, len(t.children))
+	childs := make([]*node, len(t.Nodes))
 	i := 0
-	for _, n := range t.children {
+	for _, n := range t.Nodes {
 		childs[i] = n
 		i++
 	}
@@ -57,7 +57,7 @@ func (t *node) Children() []*node {
 }
 
 func (t *node) HasChildren() bool {
-	return t.children != nil
+	return t.Nodes != nil
 }
 
 func (t *node) FlatView() (out chan string) {

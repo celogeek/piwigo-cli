@@ -1,4 +1,4 @@
-package piwigocli
+package main
 
 type CategoriesGroup struct {
 	List CategoriesListCommand `command:"list" description:"List categories"`
