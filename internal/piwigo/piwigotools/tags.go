@@ -16,15 +16,18 @@ type Tag struct {
 	ImageUrl     string     `json:"page_url"`
 }
 
-func (c Tags) NamesWithAgeAt(createdAt TimeResult) []string {
-	names := make([]string, len(c))
-	for i, category := range c {
-		bd := category.Birthdate.AgeAt(createdAt)
-		if bd != "" {
-			names[i] = fmt.Sprintf("%s (%s)", category.Name, bd)
-		} else {
-			names[i] = category.Name
-		}
+func (t Tags) NamesWithAgeAt(createdAt *TimeResult) []string {
+	names := make([]string, len(t))
+	for i, tag := range t {
+		names[i] = tag.NameWithAgeAt(createdAt)
 	}
 	return names
+}
+
+func (t *Tag) NameWithAgeAt(createdAt *TimeResult) string {
+	bd := t.Birthdate.AgeAt(createdAt)
+	if bd != "" {
+		return fmt.Sprintf("%s (%s)", t.Name, bd)
+	}
+	return t.Name
 }

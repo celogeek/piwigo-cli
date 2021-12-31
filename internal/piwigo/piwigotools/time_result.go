@@ -44,7 +44,7 @@ func (c TimeResult) toTime() time.Time {
 	return time.Time(c)
 }
 
-func (c TimeResult) AgeAt(createdAt TimeResult) string {
+func (c TimeResult) AgeAt(createdAt *TimeResult) string {
 	var year, month, day, hour, min, sec int
 	a := c.toTime()
 	if a.IsZero() {
