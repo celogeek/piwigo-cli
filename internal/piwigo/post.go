@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
+	"github.com/celogeek/piwigo-cli/internal/debug"
 )
 
 type PiwigoResult struct {
@@ -98,7 +98,7 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 			return err
 		}
 
-		piwigotools.DumpResponse(RawResult)
+		debug.Dump(RawResult)
 	}
 
 	if Result.Stat != "ok" {

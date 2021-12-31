@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/celogeek/piwigo-cli/internal/debug"
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
-	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 )
 
 type MethodTryCommand struct {
@@ -31,11 +31,11 @@ func (c *MethodTryCommand) Execute(args []string) error {
 	}
 
 	if err := p.Post(c.MethodName, params, &result); err != nil {
-		piwigotools.DumpResponse(params)
+		debug.Dump(params)
 		return err
 	}
 
-	piwigotools.DumpResponse(map[string]interface{}{
+	debug.Dump(map[string]interface{}{
 		"params": params,
 		"result": result,
 	})
