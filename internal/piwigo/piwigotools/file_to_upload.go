@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/celogeek/piwigo-cli/internal/md5"
 )
 
 type FileToUpload struct {
@@ -26,7 +28,7 @@ func (f *FileToUpload) Checked() bool {
 
 func (f *FileToUpload) MD5() string {
 	if f.md5 == nil {
-		md5, err := Md5File(f.FullPath())
+		md5, err := md5.File(f.FullPath())
 		if err != nil {
 			return ""
 		}
