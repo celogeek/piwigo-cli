@@ -1,5 +1,13 @@
 package piwigotools
 
+import (
+	"bytes"
+	"encoding/base64"
+	"fmt"
+	"io"
+	"net/http"
+)
+
 type ImageDetails struct {
 	Id            int        `json:"id"`
 	Md5           string     `json:"md5sum"`
@@ -20,4 +28,40 @@ type ImageDetails struct {
 		Width  int    `json:"width"`
 		Url    string `json:"url"`
 	} `json:"derivatives"`
+}
+
+func (img *ImageDetails) Preview(height int) (string, error) {
+	url := img.ImageUrl
+	if der, ok := img.Derivatives["medium"]; ok {
+		url = der.Url
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("[error %d] failed to get image", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+
+	buf := bytes.NewBuffer([]byte{})
+
+	buf.WriteString("\033]1337")
+	buf.WriteString(";File=")
+	buf.WriteString(";inline=1")
+	buf.WriteString(fmt.Sprintf(";size=%d;", resp.ContentLength))
+	if height > 0 {
+		buf.WriteString(fmt.Sprintf(";height=%d", height))
+	}
+	buf.WriteString(":")
+
+	encoder := base64.NewEncoder(base64.StdEncoding, buf)
+	defer encoder.Close()
+	if _, err := io.Copy(encoder, resp.Body); err != nil {
+		return "", err
+	}
+	buf.WriteString("\a")
+
+	return buf.String(), nil
 }
