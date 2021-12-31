@@ -5,10 +5,10 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
-	"strings"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
 	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
+	"github.com/celogeek/piwigo-cli/internal/tree"
 	"github.com/schollz/progressbar/v3"
 )
 
@@ -51,7 +51,7 @@ func (c *ImagesListCommand) Execute(args []string) error {
 		if !ok {
 			return fmt.Errorf("category doesn't exists")
 		}
-		rootCatName = rootCat.Name + " / "
+		rootCatName = rootCat.Name
 	}
 
 	filter := regexp.MustCompile("")
@@ -59,7 +59,7 @@ func (c *ImagesListCommand) Execute(args []string) error {
 		filter = regexp.MustCompile("(?i)" + c.Filter)
 	}
 
-	rootTree := piwigotools.NewTree()
+	rootTree := tree.New()
 
 	bar := progressbar.Default(1, "listing")
 	for page := 0; ; page++ {
@@ -80,9 +80,11 @@ func (c *ImagesListCommand) Execute(args []string) error {
 
 		for _, image := range resp.Images {
 			for _, cat := range image.Categories {
-				filename := filepath.Join(
-					strings.ReplaceAll(categories[cat.Id].Name[len(rootCatName):], " / ", "/"),
-					image.Filename,
+				filename, _ := filepath.Rel(rootCatName,
+					filepath.Join(
+						categories[cat.Id].Name,
+						image.Filename,
+					),
 				)
 				if !filter.MatchString(filename) {
 					continue

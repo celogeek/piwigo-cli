@@ -1,4 +1,4 @@
-package piwigotools
+package tree
 
 import (
 	"path/filepath"
@@ -13,15 +13,15 @@ type Tree interface {
 	TreeView() chan string
 }
 
-type node struct {
-	Name  string
-	Nodes map[string]*node
-}
-
-func NewTree() Tree {
+func New() Tree {
 	return &node{
 		Name: ".",
 	}
+}
+
+type node struct {
+	Name  string
+	Nodes map[string]*node
 }
 
 func (t *node) Add(name string) Tree {

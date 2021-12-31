@@ -1,6 +1,6 @@
 package piwigotools
 
-type Categories []Category
+type Categories []*Category
 
 type Category struct {
 	Id          int    `json:"id"`

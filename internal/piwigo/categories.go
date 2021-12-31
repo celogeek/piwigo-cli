@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 )
@@ -21,22 +22,25 @@ func (p *Piwigo) Categories() (piwigotools.Categories, error) {
 	}, &result); err != nil {
 		return nil, err
 	}
+	for _, category := range result.Categories {
+		category.Name = strings.ReplaceAll(category.Name, " / ", "/")
+	}
 	return result.Categories, nil
 }
 
-func (p *Piwigo) CategoryFromId() (map[int]piwigotools.Category, error) {
+func (p *Piwigo) CategoryFromId() (map[int]*piwigotools.Category, error) {
 	categories, err := p.Categories()
 	if err != nil {
 		return nil, err
 	}
-	result := map[int]piwigotools.Category{}
+	result := map[int]*piwigotools.Category{}
 	for _, category := range categories {
 		result[category.Id] = category
 	}
 	return result, nil
 }
 
-func (p *Piwigo) CategoryFromName(catId int) (map[string]piwigotools.Category, error) {
+func (p *Piwigo) CategoryFromName(catId int) (map[string]*piwigotools.Category, error) {
 	var results CategoriesResult
 
 	err := p.Post("pwg.categories.getList", &url.Values{
@@ -46,13 +50,14 @@ func (p *Piwigo) CategoryFromName(catId int) (map[string]piwigotools.Category, e
 		return nil, err
 	}
 
-	categoriesId := map[string]piwigotools.Category{}
+	categoriesId := map[string]*piwigotools.Category{}
 	ok := false
 	for _, category := range results.Categories {
 		switch category.Id {
 		case catId:
 			ok = true
 		default:
+			category.Name = strings.ReplaceAll(category.Name, " / ", "/")
 			categoriesId[category.Name] = category
 		}
 	}

@@ -178,7 +178,7 @@ func (p *Piwigo) ScanTree(
 			dirname := norm.NFC.String(dir.Name())
 			category, ok := categoryFromName[dirname]
 			if !ok {
-				category = piwigotools.Category{}
+				category = &piwigotools.Category{}
 				p.mu.Lock()
 				err = p.Post("pwg.categories.add", &url.Values{
 					"name":   []string{strings.ReplaceAll(dirname, "'", `\'`)},
