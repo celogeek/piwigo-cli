@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/celogeek/piwigo-cli/internal/base64"
+	"github.com/celogeek/piwigo-cli/internal/exif"
 	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 	"golang.org/x/text/unicode/norm"
 )
@@ -57,7 +59,7 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 		return
 	}
 	wg := &sync.WaitGroup{}
-	chunks, err := piwigotools.Base64Chunker(file.FullPath())
+	chunks, err := base64.Chunker(file.FullPath())
 	if err != nil {
 		stat.Error("Base64Chunker", file.FullPath(), err)
 		return
@@ -75,14 +77,15 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 
 	// lock this process for committing the file
 
-	exif, _ := piwigotools.Exif(file.FullPath())
 	var resp *FileUploadResult
 	data := &url.Values{}
 	data.Set("original_sum", file.MD5())
 	data.Set("original_filename", file.Name)
 	data.Set("check_uniqueness", "true")
-	if exif != nil && exif.CreatedAt != nil {
-		data.Set("date_creation", exif.CreatedAt.String())
+
+	info, _ := exif.Extract(file.FullPath())
+	if info != nil && info.CreatedAt != nil {
+		data.Set("date_creation", piwigotools.TimeResult(*info.CreatedAt).String())
 	}
 	if file.CategoryId > 0 {
 		data.Set("categories", fmt.Sprint(file.CategoryId))
@@ -114,7 +117,7 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 	stat.Done()
 }
 
-func (p *Piwigo) UploadChunk(file *piwigotools.FileToUpload, chunks chan *piwigotools.Base64Chunk, wg *sync.WaitGroup, stat *piwigotools.FileToUploadStat, ok *bool) {
+func (p *Piwigo) UploadChunk(file *piwigotools.FileToUpload, chunks chan *base64.Chunk, wg *sync.WaitGroup, stat *piwigotools.FileToUploadStat, ok *bool) {
 	defer wg.Done()
 	for chunk := range chunks {
 		var err error

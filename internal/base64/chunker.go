@@ -1,8 +1,8 @@
-package piwigotools
+package base64
 
 import (
 	"bytes"
-	"encoding/base64"
+	b64 "encoding/base64"
 	"os"
 )
 
@@ -10,29 +10,29 @@ var CHUNK_SIZE int64 = 1 * 1024 * 1024
 var CHUNK_BUFF_SIZE int64 = 32 * 1024
 var CHUNK_BUFF_COUNT = CHUNK_SIZE / CHUNK_BUFF_SIZE
 
-type Base64Chunk struct {
+type Chunk struct {
 	Position int64
 	Size     int64
 	Buffer   bytes.Buffer
 }
 
-func Base64Chunker(filename string) (out chan *Base64Chunk, err error) {
+func Chunker(filename string) (chan *Chunk, error) {
 	f, err := os.Open(filename)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	out = make(chan *Base64Chunk, 8)
-	go func() {
+	out := make(chan *Chunk, 8)
+	chunker := func() {
 		b := make([]byte, CHUNK_BUFF_SIZE)
 		defer f.Close()
 		defer close(out)
 		ok := false
 		for position := int64(0); !ok; position += 1 {
-			bf := &Base64Chunk{
+			bf := &Chunk{
 				Position: position,
 			}
-			b64 := base64.NewEncoder(base64.StdEncoding, &bf.Buffer)
+			b64 := b64.NewEncoder(b64.StdEncoding, &bf.Buffer)
 			for i := int64(0); i < CHUNK_BUFF_COUNT; i++ {
 				n, _ := f.Read(b)
 				if n == 0 {
@@ -47,7 +47,9 @@ func Base64Chunker(filename string) (out chan *Base64Chunk, err error) {
 				out <- bf
 			}
 		}
-	}()
+	}
 
-	return
+	go chunker()
+
+	return out, nil
 }
