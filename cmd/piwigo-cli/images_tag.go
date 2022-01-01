@@ -46,8 +46,8 @@ func (c *ImagesTagCommand) Execute(args []string) error {
 	if err != nil {
 		return err
 	}
-
 	fmt.Println(img)
+
 	t := table.NewWriter()
 	t.AppendRows([]table.Row{
 		{"Name", imgDetails.Name},
@@ -61,6 +61,5 @@ func (c *ImagesTagCommand) Execute(args []string) error {
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleLight)
 	t.Render()
-
 	return nil
 }

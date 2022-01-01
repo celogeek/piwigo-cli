@@ -48,7 +48,7 @@ func (img *ImageDetails) Preview(height int) (string, error) {
 	buf := bytes.NewBuffer([]byte{})
 
 	buf.WriteString("\033]1337")
-	buf.WriteString(";File=")
+	buf.WriteString(fmt.Sprintf(";File=%s", img.Filename))
 	buf.WriteString(";inline=1")
 	buf.WriteString(fmt.Sprintf(";size=%d;", resp.ContentLength))
 	if height > 0 {
