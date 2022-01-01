@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
@@ -12,7 +14,8 @@ import (
 )
 
 type ImagesTagCommand struct {
-	Id int `short:"i" long:"id" description:"image id to tag" required:"true"`
+	Id          int    `short:"i" long:"id" description:"image id to tag" required:"true"`
+	ExcludeTags string `short:"x" long:"exclude" description:"exclude tag from selection"`
 }
 
 func (c *ImagesTagCommand) Execute(args []string) error {
@@ -42,6 +45,10 @@ func (c *ImagesTagCommand) Execute(args []string) error {
 		return err
 	}
 
+	sort.Slice(tags.Tags, func(i, j int) bool {
+		return tags.Tags[i].Name < tags.Tags[j].Name
+	})
+
 	img, err := imgDetails.Preview(25)
 	if err != nil {
 		return err
@@ -61,5 +68,42 @@ func (c *ImagesTagCommand) Execute(args []string) error {
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleLight)
 	t.Render()
+
+	var exclude *regexp.Regexp
+	if c.ExcludeTags != "" {
+		exclude = regexp.MustCompile(c.ExcludeTags)
+	}
+
+	sel, err := tags.Tags.Select(exclude)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Selection:")
+	selIds := make([]string, len(sel))
+	for i, s := range sel {
+		selIds[i] = fmt.Sprint(s.Id)
+		fmt.Printf("  - %s\n", s.NameWithAgeAt(&imgDetails.DateCreation))
+	}
+
+	fmt.Println("")
+	fmt.Printf("Confirmed (Y/n)? ")
+	var answer string
+	fmt.Scanln(&answer)
+
+	switch answer {
+	case "", "y", "Y":
+		fmt.Println("Applying changes...")
+		data := &url.Values{}
+		data.Set("image_id", fmt.Sprint(c.Id))
+		data.Set("multiple_value_mode", "replace")
+		data.Set("tag_ids", strings.Join(selIds, ","))
+
+		if err := p.Post("pwg.images.setInfo", data, nil); err != nil {
+			return err
+		}
+		fmt.Println("Done!")
+	}
+
 	return nil
 }
