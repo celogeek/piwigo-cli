@@ -52,25 +52,31 @@ func (t Tags) JoinIds(sep string) string {
 	return strings.Join(ids, sep)
 }
 
-func (t Tags) Select(exclude *regexp.Regexp, keepFilter bool) Tags {
-	options := make([]string, len(t))
+func (t Tags) Selector(exclude *regexp.Regexp, keepFilter bool) func() Tags {
+	options := make([]string, 0, len(t))
 	tags := map[string]*Tag{}
-	for i, tag := range t {
-		options[i] = tag.Name
+	for _, tag := range t {
+		if exclude != nil && exclude.MatchString(tag.Name) {
+			continue
+		}
+		options = append(options, tag.Name)
 		tags[tag.Name] = tag
 	}
 
-	answer := []string{}
-	prompt := &survey.MultiSelect{
-		Message:  "Tags:",
-		Options:  options,
-		PageSize: 20,
-	}
-	survey.AskOne(prompt, &answer, survey.WithKeepFilter(keepFilter))
+	return func() Tags {
+		answer := []string{}
 
-	result := make([]*Tag, len(answer))
-	for i, a := range answer {
-		result[i] = tags[a]
+		survey.AskOne(&survey.MultiSelect{
+			Message:  "Tags:",
+			Options:  options,
+			PageSize: 20,
+		}, &answer, survey.WithKeepFilter(keepFilter))
+
+		result := make([]*Tag, len(answer))
+		for i, a := range answer {
+			result[i] = tags[a]
+		}
+		return result
 	}
-	return result
+
 }
