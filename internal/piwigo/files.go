@@ -29,25 +29,28 @@ func (p *Piwigo) FileExists(md5 string) bool {
 }
 
 func (p *Piwigo) CheckUploadFile(file *piwigotools.FileToUpload, stat *piwigotools.FileToUploadStat) (err error) {
-	if !file.Checked() {
-		if file.MD5() == "" {
-			stat.Fail()
-			stat.Check()
-			err = fmt.Errorf("%s: checksum error", file.FullPath())
-			stat.Error("CheckUploadFile", file.FullPath(), err)
-			return
-		}
-
-		if p.FileExists(file.MD5()) {
-			stat.Skip()
-			stat.Check()
-			err = fmt.Errorf("%s: file already exists", file.FullPath())
-			return
-		}
-
-		stat.Check()
-		stat.AddBytes(file.Size())
+	if file.Checked() {
+		return nil
 	}
+
+	if file.MD5() == nil {
+		stat.Fail()
+		stat.Check()
+		err = fmt.Errorf("%s: checksum error", *file.FullPath())
+		stat.Error("CheckUploadFile", *file.FullPath(), err)
+		return
+	}
+
+	if p.FileExists(*file.MD5()) {
+		stat.Skip()
+		stat.Check()
+		err = fmt.Errorf("%s: file already exists", *file.FullPath())
+		return
+	}
+
+	stat.Check()
+	stat.AddBytes(*file.Size())
+
 	return nil
 }
 
@@ -59,7 +62,7 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 	wg := &sync.WaitGroup{}
 	chunks, err := file.Base64Chunker()
 	if err != nil {
-		stat.Error("Base64Chunker", file.FullPath(), err)
+		stat.Error("Base64Chunker", *file.FullPath(), err)
 		return
 	}
 
@@ -77,7 +80,7 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 
 	var resp *FileUploadResult
 	data := &url.Values{}
-	data.Set("original_sum", file.MD5())
+	data.Set("original_sum", *file.MD5())
 	data.Set("original_filename", file.Name)
 	data.Set("check_uniqueness", "true")
 	if file.CreatedAt() != nil {
@@ -95,7 +98,7 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 			err = nil
 			break
 		}
-		stat.Error(fmt.Sprintf("Upload %d", i), file.FullPath(), err)
+		stat.Error(fmt.Sprintf("Upload %d", i), *file.FullPath(), err)
 	}
 
 	if err != nil {
@@ -104,7 +107,7 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 	}
 
 	if hasVideoJS {
-		switch file.Ext() {
+		switch *file.Ext() {
 		case "ogg", "ogv", "mp4", "m4v", "webm", "webmv":
 			p.VideoJSSync(resp.ImageId)
 		}
@@ -118,7 +121,7 @@ func (p *Piwigo) UploadChunk(file *piwigotools.FileToUpload, chunks chan *piwigo
 	for chunk := range chunks {
 		var err error
 		data := &url.Values{
-			"original_sum": []string{file.MD5()},
+			"original_sum": []string{*file.MD5()},
 			"position":     []string{fmt.Sprint(chunk.Position)},
 			"type":         []string{"file"},
 			"data":         []string{chunk.Buffer.String()},
@@ -128,7 +131,7 @@ func (p *Piwigo) UploadChunk(file *piwigotools.FileToUpload, chunks chan *piwigo
 			if err == nil {
 				break
 			}
-			stat.Error(fmt.Sprintf("UploadChunk %d", i), file.FullPath(), err)
+			stat.Error(fmt.Sprintf("UploadChunk %d", i), *file.FullPath(), err)
 		}
 		stat.Commit(chunk.Size)
 		if err != nil {
@@ -193,7 +196,7 @@ func (p *Piwigo) ScanTree(
 				Name:       dir.Name(),
 				CategoryId: parentCategoryId,
 			}
-			if !filter.Has(file.Ext()) {
+			if !filter.Has(*file.Ext()) {
 				continue
 			}
 			stat.Add()

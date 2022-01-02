@@ -15,9 +15,10 @@ import (
 )
 
 type FileInfo struct {
-	md5       string
-	size      int64
-	ext       string
+	fullpath  *string
+	md5       *string
+	size      *int64
+	ext       *string
 	createdAt *TimeResult
 }
 
@@ -26,73 +27,119 @@ type FileToUpload struct {
 	Name       string
 	CategoryId int
 
-	info *FileInfo
+	info FileInfo
 }
 
-func (f *FileToUpload) FullPath() string {
-	return filepath.Join(f.Dir, f.Name)
+func (f *FileToUpload) FullPath() *string {
+	if f.info.fullpath != nil {
+		return f.info.fullpath
+	}
+	fp := filepath.Join(f.Dir, f.Name)
+	f.info.fullpath = &fp
+
+	return f.info.fullpath
 }
 
-func (f *FileToUpload) Info() *FileInfo {
-	if f.info != nil {
-		return f.info
+func (f *FileToUpload) Size() *int64 {
+	if f.info.size != nil {
+		return f.info.size
 	}
 
-	file, err := os.Open(f.FullPath())
+	st, err := os.Stat(*f.FullPath())
+	if err != nil {
+		return nil
+	}
+	size := st.Size()
+
+	f.info.size = &size
+
+	return f.info.size
+}
+
+func (f *FileToUpload) Ext() *string {
+	if f.info.ext != nil {
+		return f.info.ext
+	}
+
+	ext := strings.ToLower(filepath.Ext(f.Name)[1:])
+	f.info.ext = &ext
+
+	return f.info.ext
+}
+
+func (f *FileToUpload) MD5() *string {
+	if f.info.md5 != nil {
+		return f.info.md5
+	}
+	file, err := os.Open(*f.FullPath())
 	if err != nil {
 		return nil
 	}
 	defer file.Close()
-
-	st, err := file.Stat()
-	if err != nil {
-		return nil
-	}
-
 	hash := md5.New()
 	if _, err = io.Copy(hash, file); err != nil {
 		return nil
 	}
-
 	checksum := fmt.Sprintf("%x", hash.Sum(nil))
+	f.info.md5 = &checksum
 
-	info := FileInfo{
-		size:      st.Size(),
-		md5:       checksum,
-		createdAt: f.exifCreatedAt(),
-	}
-
-	f.info = &info
-	return f.info
-}
-
-func (f *FileToUpload) Checked() bool {
-	return f.info != nil
-}
-
-func (f *FileToUpload) MD5() string {
-	if info := f.Info(); info != nil {
-		return info.md5
-	}
-	return ""
-}
-
-func (f *FileToUpload) Size() int64 {
-	if info := f.Info(); info != nil {
-		return info.size
-	}
-	return -1
-}
-
-func (f *FileToUpload) Ext() string {
-	return strings.ToLower(filepath.Ext(f.Name)[1:])
+	return f.info.md5
 }
 
 func (f *FileToUpload) CreatedAt() *TimeResult {
-	if info := f.Info(); info != nil {
-		return info.createdAt
+	if f.info.createdAt != nil {
+		return f.info.createdAt
 	}
-	return nil
+
+	et, err := exiftool.NewExiftool()
+	if err != nil {
+		return nil
+	}
+	defer et.Close()
+
+	var createdAt *time.Time
+	var CreateDateFormat = "2006:01:02 15:04:05-07:00"
+
+	fileInfos := et.ExtractMetadata(*f.FullPath())
+	for _, fileInfo := range fileInfos {
+		if fileInfo.Err != nil {
+			continue
+		}
+
+		var t time.Time
+		for k, v := range fileInfo.Fields {
+			switch k {
+			case "CreateDate":
+				offset, ok := fileInfo.Fields["OffsetTime"]
+				if !ok {
+					offset = "+00:00"
+				}
+				v := fmt.Sprintf("%s%s", v, offset)
+				t, err = time.Parse(CreateDateFormat, v)
+			case "CreationDate":
+				t, err = time.Parse(CreateDateFormat, fmt.Sprint(v))
+			default:
+				continue
+			}
+			if err != nil {
+				continue
+			}
+			if createdAt == nil || createdAt.After(t) {
+				createdAt = &t
+			}
+		}
+	}
+
+	if createdAt != nil {
+		result := TimeResult(*createdAt)
+		f.info.createdAt = &result
+	}
+
+	return f.info.createdAt
+}
+
+func (f *FileToUpload) Checked() bool {
+	return f.info.md5 != nil
 }
 
 var (
@@ -108,7 +155,7 @@ type FileToUploadChunk struct {
 }
 
 func (f *FileToUpload) Base64Chunker() (chan *FileToUploadChunk, error) {
-	fh, err := os.Open(f.FullPath())
+	fh, err := os.Open(*f.FullPath())
 	if err != nil {
 		return nil, err
 	}
@@ -143,50 +190,4 @@ func (f *FileToUpload) Base64Chunker() (chan *FileToUploadChunk, error) {
 	go chunker()
 
 	return out, nil
-}
-
-func (f *FileToUpload) exifCreatedAt() *TimeResult {
-	et, err := exiftool.NewExiftool()
-	if err != nil {
-		return nil
-	}
-	defer et.Close()
-
-	var createdAt *time.Time
-	var CreateDateFormat = "2006:01:02 15:04:05-07:00"
-
-	fileInfos := et.ExtractMetadata(f.FullPath())
-	for _, fileInfo := range fileInfos {
-		if fileInfo.Err != nil {
-			continue
-		}
-
-		var t time.Time
-		for k, v := range fileInfo.Fields {
-			switch k {
-			case "CreateDate":
-				offset, ok := fileInfo.Fields["OffsetTime"]
-				if !ok {
-					offset = "+00:00"
-				}
-				v := fmt.Sprintf("%s%s", v, offset)
-				t, err = time.Parse(CreateDateFormat, v)
-			case "CreationDate":
-				t, err = time.Parse(CreateDateFormat, fmt.Sprint(v))
-			default:
-				continue
-			}
-			if err != nil {
-				continue
-			}
-			if createdAt == nil || createdAt.After(t) {
-				createdAt = &t
-			}
-		}
-	}
-	if createdAt != nil {
-		result := TimeResult(*createdAt)
-		return &result
-	}
-	return nil
 }
