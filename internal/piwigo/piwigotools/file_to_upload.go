@@ -58,7 +58,6 @@ func (f *FileToUpload) Info() *FileInfo {
 
 	info := FileInfo{
 		size:      st.Size(),
-		ext:       strings.ToLower(filepath.Ext(f.Name)[1:]),
 		md5:       checksum,
 		createdAt: f.exifCreatedAt(),
 	}
@@ -86,10 +85,7 @@ func (f *FileToUpload) Size() int64 {
 }
 
 func (f *FileToUpload) Ext() string {
-	if info := f.Info(); info != nil {
-		return info.ext
-	}
-	return ""
+	return strings.ToLower(filepath.Ext(f.Name)[1:])
 }
 
 func (f *FileToUpload) CreatedAt() *TimeResult {

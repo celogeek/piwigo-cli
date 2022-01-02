@@ -81,7 +81,6 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 	data.Set("original_filename", file.Name)
 	data.Set("check_uniqueness", "true")
 	if file.CreatedAt() != nil {
-		fmt.Println(file.CreatedAt())
 		data.Set("date_creation", file.CreatedAt().String())
 	}
 	if file.CategoryId > 0 {
