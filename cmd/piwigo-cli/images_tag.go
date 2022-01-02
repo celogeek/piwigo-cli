@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
 	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -74,36 +75,33 @@ func (c *ImagesTagCommand) Execute(args []string) error {
 		exclude = regexp.MustCompile(c.ExcludeTags)
 	}
 
-	sel, err := tags.Tags.Select(exclude)
-	if err != nil {
-		return err
-	}
+	sel := tags.Tags.Select(exclude)
 
 	fmt.Println("Selection:")
-	selIds := make([]string, len(sel))
-	for i, s := range sel {
-		selIds[i] = fmt.Sprint(s.Id)
-		fmt.Printf("  - %s\n", s.NameWithAgeAt(&imgDetails.DateCreation))
+	for _, name := range sel.NamesWithAgeAt(&imgDetails.DateCreation) {
+		fmt.Printf("  - %s\n", name)
 	}
 
-	fmt.Println("")
-	fmt.Printf("Confirmed (Y/n)? ")
-	var answer string
-	fmt.Scanln(&answer)
+	confirmSel := false
+	survey.AskOne(&survey.Confirm{
+		Message: "Confirm:",
+		Default: true,
+	}, &confirmSel)
 
-	switch answer {
-	case "", "y", "Y":
-		fmt.Println("Applying changes...")
-		data := &url.Values{}
-		data.Set("image_id", fmt.Sprint(c.Id))
-		data.Set("multiple_value_mode", "replace")
-		data.Set("tag_ids", strings.Join(selIds, ","))
-
-		if err := p.Post("pwg.images.setInfo", data, nil); err != nil {
-			return err
-		}
-		fmt.Println("Done!")
+	if !confirmSel {
+		return nil
 	}
+
+	fmt.Println("Applying changes...")
+	data := &url.Values{}
+	data.Set("image_id", fmt.Sprint(c.Id))
+	data.Set("multiple_value_mode", "replace")
+	data.Set("tag_ids", sel.JoinIds(","))
+
+	if err := p.Post("pwg.images.setInfo", data, nil); err != nil {
+		return err
+	}
+	fmt.Println("Done!")
 
 	return nil
 }

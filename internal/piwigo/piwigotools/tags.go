@@ -2,11 +2,10 @@ package piwigotools
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
+
+	"github.com/AlecAivazis/survey/v2"
 )
 
 type Tags []*Tag
@@ -37,29 +36,41 @@ func (t *Tag) NameWithAgeAt(createdAt *TimeResult) string {
 	return t.Name
 }
 
-func (t Tags) Select(exclude *regexp.Regexp) ([]*Tag, error) {
-	fzf := "fzf --multi --height=30% --border --layout=reverse -e --bind=esc:clear-query --with-nth 2 --delimiter=\"\t\""
-	cmd := exec.Command("sh", "-c", fzf)
-	cmd.Stderr = os.Stderr
-	in, _ := cmd.StdinPipe()
-	go func() {
-		defer in.Close()
-		for i, tag := range t {
-			if exclude != nil && exclude.MatchString(tag.Name) {
-				continue
-			}
-			in.Write([]byte(fmt.Sprintf("%d\t%s\n", i, tag.Name)))
-		}
-	}()
-	out, _ := cmd.Output()
-	rows := strings.Split(string(out), "\n")
-	selections := make([]*Tag, 0, len(rows))
-	for _, row := range rows {
-		i, err := strconv.Atoi(strings.Split(row, "\t")[0])
-		if err != nil {
-			continue
-		}
-		selections = append(selections, t[i])
+func (t Tags) Ids() []int {
+	ids := make([]int, len(t))
+	for i, tag := range t {
+		ids[i] = tag.Id
 	}
-	return selections, nil
+	return ids
+}
+
+func (t Tags) JoinIds(sep string) string {
+	ids := make([]string, len(t))
+	for i, tag := range t {
+		ids[i] = fmt.Sprint(tag.Id)
+	}
+	return strings.Join(ids, sep)
+}
+
+func (t Tags) Select(exclude *regexp.Regexp) Tags {
+	options := make([]string, len(t))
+	tags := map[string]*Tag{}
+	for i, tag := range t {
+		options[i] = tag.Name
+		tags[tag.Name] = tag
+	}
+
+	answer := []string{}
+	prompt := &survey.MultiSelect{
+		Message:  "Tags:",
+		Options:  options,
+		PageSize: 20,
+	}
+	survey.AskOne(prompt, &answer, survey.WithKeepFilter(true))
+
+	result := make([]*Tag, len(answer))
+	for i, a := range answer {
+		result[i] = tags[a]
+	}
+	return result
 }
