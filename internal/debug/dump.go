@@ -1,14 +1,20 @@
+/*
+	Debug tools
+
+	debug.Dump(myStruct)
+*/
 package debug
 
 import (
 	"encoding/json"
-	"fmt"
+	"os"
 )
 
-func Dump(v interface{}) (err error) {
-	b, err := json.MarshalIndent(v, "", "  ")
-	if err == nil {
-		fmt.Println(string(b))
-	}
-	return
+/*
+	Dump an interface to the stdout
+*/
+func Dump(v interface{}) error {
+	d := json.NewEncoder(os.Stdout)
+	d.SetIndent("", "  ")
+	return d.Encode(v)
 }
