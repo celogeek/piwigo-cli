@@ -86,6 +86,10 @@ func (c *ImagesTagCommand) Execute(args []string) error {
 		}
 	}
 
+	if len(imagesToTags) == 0 {
+		return fmt.Errorf("no image to tag")
+	}
+
 	for _, imgId := range imagesToTags {
 		for {
 			var imgDetails piwigotools.ImageDetails
