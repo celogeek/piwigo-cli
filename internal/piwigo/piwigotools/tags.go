@@ -3,6 +3,7 @@ package piwigotools
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -53,8 +54,10 @@ func (t Tags) JoinIds(sep string) string {
 }
 
 func (t Tags) Selector(exclude *regexp.Regexp, keepFilter bool) func() Tags {
-	options := make([]string, 0, len(t))
+	options := make([]string, 1, len(t))
+	options[0] = "Same as before"
 	tags := map[string]*Tag{}
+	tags[options[0]] = nil
 	for _, tag := range t {
 		if exclude != nil && exclude.MatchString(tag.Name) {
 			continue
@@ -63,6 +66,7 @@ func (t Tags) Selector(exclude *regexp.Regexp, keepFilter bool) func() Tags {
 		tags[tag.Name] = tag
 	}
 
+	var previousTags Tags
 	return func() Tags {
 		answer := []string{}
 
@@ -72,10 +76,29 @@ func (t Tags) Selector(exclude *regexp.Regexp, keepFilter bool) func() Tags {
 			PageSize: 20,
 		}, &answer, survey.WithKeepFilter(keepFilter))
 
-		result := make([]*Tag, len(answer))
-		for i, a := range answer {
-			result[i] = tags[a]
+		result := make([]*Tag, 0, len(answer))
+		alreadySelected := map[int]bool{}
+		for _, a := range answer {
+			if tags[a] == nil {
+				for _, p := range previousTags {
+					if _, ok := alreadySelected[p.Id]; !ok {
+						result = append(result, p)
+					}
+					alreadySelected[p.Id] = true
+				}
+			} else {
+				if _, ok := alreadySelected[tags[a].Id]; !ok {
+					result = append(result, tags[a])
+				}
+				alreadySelected[tags[a].Id] = true
+			}
 		}
+
+		sort.Slice(result, func(i, j int) bool {
+			return result[i].Name < result[j].Name
+		})
+
+		previousTags = result
 		return result
 	}
 
