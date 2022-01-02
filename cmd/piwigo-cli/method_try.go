@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -31,14 +32,14 @@ func (c *MethodTryCommand) Execute(args []string) error {
 	}
 
 	if err := p.Post(c.MethodName, params, &result); err != nil {
-		debug.Dump(params)
+		fmt.Println(debug.Dump(params))
 		return err
 	}
 
-	debug.Dump(map[string]interface{}{
+	fmt.Println(debug.Dump(map[string]interface{}{
 		"params": params,
 		"result": result,
-	})
+	}))
 	return nil
 }
 

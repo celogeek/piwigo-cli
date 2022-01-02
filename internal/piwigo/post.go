@@ -99,7 +99,7 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 			return err
 		}
 
-		debug.Dump(RawResult)
+		fmt.Println(debug.Dump(RawResult))
 	}
 
 	if Result.Stat != "ok" {

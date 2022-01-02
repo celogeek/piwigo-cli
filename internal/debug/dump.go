@@ -7,14 +7,15 @@ package debug
 
 import (
 	"encoding/json"
-	"os"
 )
 
 /*
 	Dump an interface to the stdout
 */
-func Dump(v interface{}) error {
-	d := json.NewEncoder(os.Stdout)
-	d.SetIndent("", "  ")
-	return d.Encode(v)
+func Dump(v interface{}) string {
+	result, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return ""
+	}
+	return string(result)
 }
