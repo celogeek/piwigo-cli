@@ -15,12 +15,13 @@ import (
 )
 
 type ImagesTagCommand struct {
-	Id               int    `short:"i" long:"id" description:"image id to tag"`
-	TagId            int    `short:"t" long:"tag-id" description:"look up for the first image of this tagId"`
-	TagName          string `short:"T" long:"tag" description:"look up for the first image of this tagName"`
-	ExcludeTags      string `short:"x" long:"exclude" description:"exclude tag from selection"`
-	KeepSurveyFilter bool   `short:"k" long:"keep" description:"keep survey filter"`
-	MaxImages        int    `short:"m" long:"max" description:"loop on a maximum number of images" default:"1"`
+	Id                 int    `short:"i" long:"id" description:"image id to tag"`
+	TagId              int    `short:"t" long:"tag-id" description:"look up for the first image of this tagId"`
+	TagName            string `short:"T" long:"tag" description:"look up for the first image of this tagName"`
+	ExcludeTags        string `short:"x" long:"exclude" description:"exclude tag from selection"`
+	MaxImages          int    `short:"m" long:"max" description:"loop on a maximum number of images" default:"1"`
+	KeepSurveyFilter   bool   `short:"k" long:"keep" description:"keep survey filter"`
+	KeepPreviousAnswer bool   `short:"K" long:"keep-previous-answer" description:"Preserve previous answer"`
 }
 
 func (c *ImagesTagCommand) Execute(args []string) error {
@@ -56,7 +57,7 @@ func (c *ImagesTagCommand) Execute(args []string) error {
 	if c.ExcludeTags != "" {
 		exclude = regexp.MustCompile(c.ExcludeTags)
 	}
-	selectTags := tags.Tags.Selector(exclude, c.KeepSurveyFilter)
+	selectTags := tags.Tags.Selector(exclude, c.KeepSurveyFilter, c.KeepPreviousAnswer)
 
 	imagesToTags := make([]int, 0, c.MaxImages)
 	if c.Id > 0 {
