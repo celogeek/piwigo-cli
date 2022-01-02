@@ -52,7 +52,7 @@ func (t Tags) JoinIds(sep string) string {
 	return strings.Join(ids, sep)
 }
 
-func (t Tags) Select(exclude *regexp.Regexp) Tags {
+func (t Tags) Select(exclude *regexp.Regexp, keepFilter bool) Tags {
 	options := make([]string, len(t))
 	tags := map[string]*Tag{}
 	for i, tag := range t {
@@ -66,7 +66,7 @@ func (t Tags) Select(exclude *regexp.Regexp) Tags {
 		Options:  options,
 		PageSize: 20,
 	}
-	survey.AskOne(prompt, &answer, survey.WithKeepFilter(true))
+	survey.AskOne(prompt, &answer, survey.WithKeepFilter(keepFilter))
 
 	result := make([]*Tag, len(answer))
 	for i, a := range answer {
