@@ -64,8 +64,8 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 	}
 
 	ok := true
+	wg.Add(nbJobs)
 	for j := 0; j < nbJobs; j++ {
-		wg.Add(1)
 		go p.UploadChunk(file, chunks, wg, stat, &ok)
 	}
 	wg.Wait()
@@ -208,8 +208,8 @@ func (p *Piwigo) CheckFiles(filesToCheck chan *piwigotools.FileToUpload, files c
 	defer close(files)
 
 	wg := &sync.WaitGroup{}
+	wg.Add(nbJobs)
 	for i := 0; i < nbJobs; i++ {
-		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for file := range filesToCheck {
@@ -235,8 +235,8 @@ func (p *Piwigo) UploadFiles(
 	defer stat.Close()
 
 	wg := &sync.WaitGroup{}
+	wg.Add(nbJobs)
 	for i := 0; i < nbJobs; i++ {
-		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for file := range files {
