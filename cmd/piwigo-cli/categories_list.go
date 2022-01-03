@@ -10,6 +10,7 @@ import (
 
 type CategoriesListCommand struct {
 	Filter string `short:"x" long:"filter" description:"Regexp filter"`
+	Empty  bool   `short:"e" long:"empty" description:"Find empty album without any photo or sub album"`
 }
 
 func (c *CategoriesListCommand) Execute(args []string) error {
@@ -28,22 +29,27 @@ func (c *CategoriesListCommand) Execute(args []string) error {
 		return err
 	}
 
-	filter := regexp.MustCompile("")
+	var filter *regexp.Regexp
 	if c.Filter != "" {
 		filter = regexp.MustCompile("(?i)" + c.Filter)
 	}
 
 	t := table.NewWriter()
-	t.AppendHeader(table.Row{"Id", "Name", "Images", "Url"})
+	t.AppendHeader(table.Row{"Id", "Name", "Images", "Total Images", "Url"})
 	for _, category := range categories {
-		if filter.MatchString(category.Name) {
-			t.AppendRow(table.Row{
-				category.Id,
-				category.Name,
-				category.ImagesCount,
-				category.Url,
-			})
+		if filter != nil && !filter.MatchString(category.Name) {
+			continue
 		}
+		if c.Empty && category.TotalImagesCount != 0 {
+			continue
+		}
+		t.AppendRow(table.Row{
+			category.Id,
+			category.Name,
+			category.ImagesCount,
+			category.TotalImagesCount,
+			category.Url,
+		})
 	}
 
 	t.SetOutputMirror(os.Stdout)
