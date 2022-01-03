@@ -2,6 +2,7 @@ package piwigotools
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/schollz/progressbar/v3"
@@ -17,6 +18,14 @@ type FileToUploadStat struct {
 	Failed        int64
 	Progress      *progressbar.ProgressBar
 	mu            sync.Mutex
+}
+
+func NewFileToUploadStat() *FileToUploadStat {
+	bar := progressbar.DefaultBytes(1, "...")
+	progressbar.OptionOnCompletion(func() { os.Stderr.WriteString("\n") })(bar)
+	return &FileToUploadStat{
+		Progress: bar,
+	}
 }
 
 func (s *FileToUploadStat) Refresh() {

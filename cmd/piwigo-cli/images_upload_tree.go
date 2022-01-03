@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
 	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
-	"github.com/schollz/progressbar/v3"
 )
 
 type ImagesUploadTreeCommand struct {
@@ -24,9 +23,7 @@ func (c *ImagesUploadTreeCommand) Execute(args []string) error {
 	}
 	_, hasVideoJS := status.Plugins["piwigo-videojs"]
 
-	stat := &piwigotools.FileToUploadStat{
-		Progress: progressbar.DefaultBytes(1, "..."),
-	}
+	stat := piwigotools.NewFileToUploadStat()
 
 	defer stat.Close()
 	filesToCheck := make(chan *piwigotools.FileToUpload, 1000)

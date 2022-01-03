@@ -7,7 +7,6 @@ import (
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo"
 	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
-	"github.com/schollz/progressbar/v3"
 )
 
 type ImagesUploadCommand struct {
@@ -40,9 +39,7 @@ func (c *ImagesUploadCommand) Execute(args []string) error {
 		CategoryId: c.CategoryId,
 	}
 
-	stat := &piwigotools.FileToUploadStat{
-		Progress: progressbar.DefaultBytes(1, "..."),
-	}
+	stat := piwigotools.NewFileToUploadStat()
 	defer stat.Close()
 	stat.Add()
 	p.Upload(file, stat, c.NbJobs, hasVideoJS)

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 
@@ -62,6 +63,9 @@ func (c *ImagesListCommand) Execute(args []string) error {
 	rootTree := tree.New()
 
 	bar := progressbar.Default(1, "listing")
+	progressbar.OptionOnCompletion(func() {
+		os.Stderr.WriteString("\n")
+	})(bar)
 	for page := 0; ; page++ {
 		var resp ImagesListResult
 		data := &url.Values{}
