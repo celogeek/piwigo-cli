@@ -55,6 +55,12 @@ The check of the images existance use MD5 checksum. If you change the metadata o
 
 You can remove the duplicates in piwigo by looking for similar photo with Name & Date & Size. Just pickup the first one so when you try to upload again, it won't reupload the images.
 
+## Doc
+
+You can checkout the go doc here:
+
+https://pkg.go.dev/github.com/celogeek/piwigo-cli/cmd/piwigo-cli
+
 ## License
 
 MIT
