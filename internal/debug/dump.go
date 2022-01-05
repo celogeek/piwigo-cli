@@ -1,7 +1,7 @@
 /*
 	Debug tools
 
-	debug.Dump(myStruct)
+	fmt.Println(debug.Dump(myStruct))
 */
 package debug
 
@@ -10,7 +10,7 @@ import (
 )
 
 /*
-	Dump an interface to the stdout
+	Dump an interface into a json string format
 */
 func Dump(v interface{}) string {
 	result, err := json.MarshalIndent(v, "", "  ")
