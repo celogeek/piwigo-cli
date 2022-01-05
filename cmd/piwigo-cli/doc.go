@@ -1,12 +1,8 @@
-// Copyright 2011 Celogeek. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-//
 // Piwigo Cli
 //
 // This tools allow you to interact with your Piwigo Instance.
 // Installation:
-//  go get github.com/celogeek/piwigo-cli/cmd/piwigo-cli
+//  go install github.com/celogeek/piwigo-cli/cmd/piwigo-cli@latest
 //
 // Help
 //
