@@ -1,3 +1,40 @@
+/*
+Images List Command
+
+List the images of a category.
+
+Recursive list:
+
+	$ piwigo-cli images list -r
+
+	Category1/SubCategory1/IMG_00001.jpeg
+	Category1/SubCategory1/IMG_00002.jpeg
+	Category1/SubCategory1/IMG_00003.jpeg
+	Category1/SubCategory1/IMG_00004.jpeg
+	Category1/SubCategory2/IMG_00005.jpeg
+	Category1/SubCategory2/IMG_00006.jpeg
+	Category2/SubCategory1/IMG_00007.jpeg
+
+Specify a category:
+
+	$ piwigo-cli images list -r -c 2
+
+	Category2/SubCategory1/IMG_00007.jpeg
+
+Tree view:
+	$ piwigo-cli images list -r -c 1 -t
+
+	.
+	├── SubCategory1
+	│   ├── IMG_00001.jpeg
+	│   ├── IMG_00002.jpeg
+	│   ├── IMG_00003.jpeg
+	│   └── IMG_00004.jpeg
+	└── SubCategory2
+		├── IMG_00005.jpeg
+		└── IMG_00006.jpeg
+
+*/
 package main
 
 import (

@@ -1,27 +1,34 @@
-// General Commands
-//
-// getinfos
-//
-//  piwigo-cli getinfos
-//
-// General information of your instance.
-//  ┌───────────────────┬─────────────────────┐
-//  │ KEY               │ VALUE               │
-//  ├───────────────────┼─────────────────────┤
-//  │ version           │ 12.2.0              │
-//  │ nb_elements       │ 39664               │
-//  │ nb_categories     │ 816                 │
-//  │ nb_virtual        │ 816                 │
-//  │ nb_physical       │ 0                   │
-//  │ nb_image_category │ 39714               │
-//  │ nb_tags           │ 73                  │
-//  │ nb_image_tag      │ 24024               │
-//  │ nb_users          │ 3                   │
-//  │ nb_groups         │ 1                   │
-//  │ nb_comments       │ 0                   │
-//  │ first_date        │ 2021-08-27 20:15:15 │
-//  │ cache_size        │ 4242                │
-//  └───────────────────┴─────────────────────┘
+/*
+General Commands
+
+General commands
+
+	$ piwigo-cli getinfos
+
+GetInfos Command
+
+General information of your instance.
+
+	$ piwigo-cli getinfos
+
+	┌───────────────────┬─────────────────────┐
+	│ KEY               │ VALUE               │
+	├───────────────────┼─────────────────────┤
+	│ version           │ 12.2.0              │
+	│ nb_elements       │ 39664               │
+	│ nb_categories     │ 816                 │
+	│ nb_virtual        │ 816                 │
+	│ nb_physical       │ 0                   │
+	│ nb_image_category │ 39714               │
+	│ nb_tags           │ 73                  │
+	│ nb_image_tag      │ 24024               │
+	│ nb_users          │ 3                   │
+	│ nb_groups         │ 1                   │
+	│ nb_comments       │ 0                   │
+	│ first_date        │ 2021-08-27 20:15:15 │
+	│ cache_size        │ 4242                │
+	└───────────────────┴─────────────────────┘
+*/
 package main
 
 import (

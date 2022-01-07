@@ -1,3 +1,15 @@
+/*
+Images Group Commands
+
+This is a group of commands to manipulate the images:
+
+	piwigo-cli images list
+	piwigo-cli images details
+	piwigo-cli images upload
+	piwigo-cli images upload-tree
+	piwigo-cli images tag
+
+*/
 package main
 
 type ImagesGroup struct {
