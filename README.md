@@ -195,6 +195,42 @@ Upload a tree of images and videos in chunks, skipping existing file on the serv
 $ piwigo-cli images upload-tree -d ~/Downloads/2021 -j4 -c 4
 ```
 
+### Images Tag Command
+
+Massive tag your image in your terminal.
+```
+$ piwigo-cli images tag -h
+Usage:
+  piwigo-cli [OPTIONS] images tag [tag-OPTIONS]
+
+Help Options:
+  -h, --help                      Show this help message
+
+[tag command options]
+      -i, --id=                   image id to tag
+      -t, --tag-id=               look up for the first image of this tagId
+      -T, --tag=                  look up for the first image of this tagName
+      -x, --exclude=              exclude tag from selection
+      -m, --max=                  loop on a maximum number of images (default: 1)
+      -k, --keep                  keep survey filter
+      -K, --keep-previous-answer  Preserve previous answer
+```
+
+Example:
+Retag the image you mark as "todo:todo-2006", 50 max at a time, by keeping the previous selection between images.
+```
+$ piwigo-cli images tag -x ^todo -T todo:todo-2006 -m 50 -K
+```
+
+It display in well on iTerm:
+
+- image
+- some details with the previous tag
+- list of tags selection
+
+You can use "SPACE" for selection of a tag, "LEFT" to remove the current selection, type words to lookup.
+
+
 ## License
 
 MIT
