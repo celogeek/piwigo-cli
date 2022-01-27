@@ -1,65 +1,170 @@
-# piwigo-cli
+# Piwigo Cli
+
+## Installation
 
 This tools allow you to interact with your Piwigo Instance.
-
-## Install
-
+Installation:
 ```
-go install github.com/celogeek/piwigo-cli/cmd/piwigo-cli@latest
+$ go install github.com/celogeek/piwigo-cli/cmd/piwigo-cli@latest
 ```
 
-## Quickstart
+## Help
+
+To get help:
+```
+$ piwigo-cli -h
+```
+
+## QuickStart
 
 ### Login
 
+First connect to your instance:
 ```
-piwigo-cli session login -u URL -l USER -p PASSWORD
-```
-
-### Check your status
-
-```
-piwigo-cli session status
+$ piwigo-cli session login -u URL -l USER -p PASSWORD
 ```
 
-### List Categories
+### Status
 
+Then check your status
 ```
-piwigo-cli categories list
-```
-
-### List images in a category and sub categories
-
-```
-piwigo-cli images list -c 4 -r
+$ piwigo-cli session status
 ```
 
-With a tree style
+## Commands
+
+### General commands
 
 ```
-piwigo-cli images list -c 4 -r -t
+$ piwigo-cli getinfos
 ```
 
-### Upload a tree of images
+### GetInfos Command
 
-This will also create all the categories using the directory name.
+General information of your instance.
 
-In this example, the category 4 (-c 4) is 2021
 ```
-images upload-tree -d ~/Downloads/2021 -j4 -c 4
+$ piwigo-cli getinfos
+
+┌───────────────────┬─────────────────────┐
+│ KEY               │ VALUE               │
+├───────────────────┼─────────────────────┤
+│ version           │ 12.2.0              │
+│ nb_elements       │ 39664               │
+│ nb_categories     │ 816                 │
+│ nb_virtual        │ 816                 │
+│ nb_physical       │ 0                   │
+│ nb_image_category │ 39714               │
+│ nb_tags           │ 73                  │
+│ nb_image_tag      │ 24024               │
+│ nb_users          │ 3                   │
+│ nb_groups         │ 1                   │
+│ nb_comments       │ 0                   │
+│ first_date        │ 2021-08-27 20:15:15 │
+│ cache_size        │ 4242                │
+└───────────────────┴─────────────────────┘
 ```
 
-This will create the categories based on your local directories, and upload only the images that doen't already exists somewhere else.
+### Categories List Command
 
-The check of the images existance use MD5 checksum. If you change the metadata of the images, it will reupload the image as a new one.
+List the categories.
 
-You can remove the duplicates in piwigo by looking for similar photo with Name & Date & Size. Just pickup the first one so when you try to upload again, it won't reupload the images.
+```
+$ piwigo-cli categories list
 
-## Doc
+┌──────┬────────────────────────────────────────────────────────────────────┬────────┬──────────────┬──────────────────────────────────────────────────────┐
+│   ID │ NAME                                                               │ IMAGES │ TOTAL IMAGES │ URL                                                  │
+├──────┼────────────────────────────────────────────────────────────────────┼────────┼──────────────┼──────────────────────────────────────────────────────┤
+│    4 │ 2021                                                               │      0 │         1520 │ https://yourphotos/index.php?/category/4             │
+│  677 │ 2021/Animals                                                       │      0 │           49 │ https://yourphotos/index.php?/category/677           │
+│   24 │ 2021/Animals/Cats                                                  │     29 │           32 │ https://yourphotos/index.php?/category/24            │
+│  760 │ 2021/Animals/Cats/Videos                                           │      3 │            3 │ https://yourphotos/index.php?/category/760           │
+└──────┴────────────────────────────────────────────────────────────────────┴────────┴──────────────┴──────────────────────────────────────────────────────┘
+```
 
-You can checkout the go doc here:
+### Images List Command
 
-https://pkg.go.dev/github.com/celogeek/piwigo-cli/cmd/piwigo-cli
+List the images of a category.
+
+Recursive list:
+
+```
+$ piwigo-cli images list -r
+
+Category1/SubCategory1/IMG_00001.jpeg
+Category1/SubCategory1/IMG_00002.jpeg
+Category1/SubCategory1/IMG_00003.jpeg
+Category1/SubCategory1/IMG_00004.jpeg
+Category1/SubCategory2/IMG_00005.jpeg
+Category1/SubCategory2/IMG_00006.jpeg
+Category2/SubCategory1/IMG_00007.jpeg
+```
+
+Specify a category:
+```
+$ piwigo-cli images list -r -c 2
+
+Category2/SubCategory1/IMG_00007.jpeg
+```
+
+Tree view:
+
+```
+$ piwigo-cli images list -r -c 1 -t
+
+.
+├── SubCategory1
+│   ├── IMG_00001.jpeg
+│   ├── IMG_00002.jpeg
+│   ├── IMG_00003.jpeg
+│   └── IMG_00004.jpeg
+└── SubCategory2
+    ├── IMG_00005.jpeg
+    └── IMG_00006.jpeg
+```
+
+### Images Details Command
+
+Get details of an image. It supports the birthday plugin.
+
+```
+$ piwigo-cli images details -i 38062
+
+┌───────────────┬───────────────────────────────────────────────────────────────────────────┐
+│ KEY           │ VALUE                                                                     │
+├───────────────┼───────────────────────────────────────────────────────────────────────────┤
+│ Id            │ 38062                                                                     │
+│ Md5           │ 6ad2abade6d5460181890e2bad671002                                          │
+│ Name          │ 2006 04 14 015                                                            │
+│ DateAvailable │ 2021-11-25 20:25:05                                                       │
+│ DateCreation  │ 2006-04-14 04:14:00                                                       │
+│ LastModified  │ 2022-01-01 23:11:48                                                       │
+│ Width         │ 1984                                                                      │
+│ Height        │ 1488                                                                      │
+│ Url           │ https://yourphotos/picture.php?/38062                                     │
+│ ImageUrl      │ https://yourphotos/upload/2021/11/25/20211125202505-6ad2abad.jpg          │
+│ Filename      │ 2006_04_14_015.jpeg                                                       │
+│ Filesize      │ 513                                                                       │
+│ Categories    │ 2007                                                                      │
+│ Tags          │ User Tag 1 (46 years old)                                                 │
+│               │ User Tag 2 (8 months old)                                                 │
+│               │ User Tag 3 (48 years old)                                                 │
+└───────────────┴───────────────────────────────────────────────────────────────────────────┘
+Derivatives:
+┌─────────┬───────┬────────┬──────────────────────────────────────────────────────────────────────────────────────┐
+│ NAME    │ WIDTH │ HEIGHT │ URL                                                                                  │
+├─────────┼───────┼────────┼──────────────────────────────────────────────────────────────────────────────────────┤
+│ thumb   │   144 │    108 │ https://yourphotos/i.php?/upload/2021/11/25/20211125202505-6ad2abad-th.jpg           │
+│ xsmall  │   432 │    324 │ https://yourphotos/i.php?/upload/2021/11/25/20211125202505-6ad2abad-xs.jpg           │
+│ xxlarge │  1656 │   1242 │ https://yourphotos/_data/i/upload/2021/11/25/20211125202505-6ad2abad-xx.jpg          │
+│ square  │   120 │    120 │ https://yourphotos/_data/i/upload/2021/11/25/20211125202505-6ad2abad-sq.jpg          │
+│ small   │   576 │    432 │ https://yourphotos/_data/i/upload/2021/11/25/20211125202505-6ad2abad-sm.jpg          │
+│ medium  │   792 │    594 │ https://yourphotos/_data/i/upload/2021/11/25/20211125202505-6ad2abad-me.jpg          │
+│ large   │  1008 │    756 │ https://yourphotos/i.php?/upload/2021/11/25/20211125202505-6ad2abad-la.jpg           │
+│ xlarge  │  1224 │    918 │ https://yourphotos/_data/i/upload/2021/11/25/20211125202505-6ad2abad-xl.jpg          │
+│ 2small  │   240 │    180 │ https://yourphotos/i.php?/upload/2021/11/25/20211125202505-6ad2abad-2s.jpg           │
+└─────────┴───────┴────────┴──────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## License
 
