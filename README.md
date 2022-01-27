@@ -13,6 +13,19 @@ $ go install github.com/celogeek/piwigo-cli/cmd/piwigo-cli@latest
 To get help:
 ```
 $ piwigo-cli -h
+
+Usage:
+  piwigo-cli [OPTIONS] <command>
+
+Help Options:
+  -h, --help  Show this help message
+
+Available commands:
+  categories  Categories management
+  getinfos    Get general information
+  images      Images management
+  method      Reflexion management
+  session     Session management
 ```
 
 ## QuickStart
