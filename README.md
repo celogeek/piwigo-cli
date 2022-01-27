@@ -166,6 +166,22 @@ Derivatives:
 └─────────┴───────┴────────┴──────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+### Images Upload Command
+
+Upload an image or a video in chunks. It will skip existing file on the server.
+
+```
+$ piwigo-cli images upload -f ~/Downloads/IMG_4886.jpeg -j 4
+```
+
+### Images Upload Tree Command
+
+Upload a tree of images and videos in chunks, skipping existing file on the server.
+
+```
+$ piwigo-cli images upload-tree -d ~/Downloads/2021 -j4 -c 4
+```
+
 ## License
 
 MIT
