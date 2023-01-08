@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/celogeek/piwigo-cli/internal/debug"
 )
@@ -52,6 +53,9 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 	raw := bytes.NewBuffer([]byte{})
 
 	for i := 0; i < 3; i++ {
+		if i > 0 {
+			time.Sleep(time.Second) // wait 1 sec before retry
+		}
 		req, err := http.NewRequest("POST", Url, strings.NewReader(encodedForm))
 		if err != nil {
 			return err

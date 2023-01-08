@@ -92,16 +92,13 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	for i := 0; i < 3; i++ {
-		err = p.Post("pwg.images.add", data, &resp)
-		if err == nil || err.Error() == "[Error 500] file already exists" {
-			err = nil
-			break
-		}
-		stat.Error(fmt.Sprintf("Upload %d", i), *file.FullPath(), err)
+	err = p.Post("pwg.images.add", data, &resp)
+	if err == nil || err.Error() == "[Error 500] file already exists" {
+		err = nil
 	}
 
 	if err != nil {
+		stat.Error("Upload", *file.FullPath(), err)
 		stat.Fail()
 		return
 	}
@@ -126,15 +123,12 @@ func (p *Piwigo) UploadChunk(file *piwigotools.FileToUpload, chunks chan *piwigo
 			"type":         []string{"file"},
 			"data":         []string{chunk.Buffer.String()},
 		}
-		for i := 0; i < 3; i++ {
-			err = p.Post("pwg.images.addChunk", data, nil)
-			if err == nil {
-				break
-			}
-			stat.Error(fmt.Sprintf("UploadChunk %d", i), *file.FullPath(), err)
-		}
+
+		err = p.Post("pwg.images.addChunk", data, nil)
 		stat.Commit(chunk.Size)
+
 		if err != nil {
+			stat.Error("UploadChunk", *file.FullPath(), err)
 			stat.Fail()
 			*ok = false
 			return

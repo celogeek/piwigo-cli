@@ -26,12 +26,12 @@ func (c *ImagesUploadTreeCommand) Execute(args []string) error {
 	stat := piwigotools.NewFileToUploadStat()
 
 	defer stat.Close()
-	filesToCheck := make(chan *piwigotools.FileToUpload, 1000)
-	files := make(chan *piwigotools.FileToUpload, 1000)
+	filesToCheck := make(chan *piwigotools.FileToUpload, 10000)
+	files := make(chan *piwigotools.FileToUpload, 10000)
 
 	go p.ScanTree(c.Dirname, c.CategoryId, 0, &status.UploadFileType, stat, filesToCheck)
 	go p.CheckFiles(filesToCheck, files, stat, 8)
-	p.UploadFiles(files, stat, hasVideoJS, 4, 2)
+	p.UploadFiles(files, stat, hasVideoJS, c.NbJobs, 2)
 
 	return nil
 }
