@@ -43,6 +43,7 @@ func (img *ImageDetails) Preview(height int) (string, error) {
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("[error %d] failed to get image", resp.StatusCode)
 	}
+	//goland:noinspection GoUnhandledErrorResult
 	defer resp.Body.Close()
 
 	buf := bytes.NewBuffer([]byte{})
@@ -57,6 +58,7 @@ func (img *ImageDetails) Preview(height int) (string, error) {
 	buf.WriteString(":")
 
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)
+	//goland:noinspection GoUnhandledErrorResult
 	defer encoder.Close()
 	if _, err := io.Copy(encoder, resp.Body); err != nil {
 		return "", err

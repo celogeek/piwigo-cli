@@ -75,6 +75,7 @@ func (f *FileToUpload) MD5() *string {
 	if err != nil {
 		return nil
 	}
+	//goland:noinspection GoUnhandledErrorResult
 	defer file.Close()
 	hash := md5.New()
 	if _, err = io.Copy(hash, file); err != nil {
@@ -95,6 +96,7 @@ func (f *FileToUpload) CreatedAt() *TimeResult {
 	if err != nil {
 		return nil
 	}
+	//goland:noinspection GoUnhandledErrorResult
 	defer et.Close()
 
 	var createdAt *time.Time
@@ -163,6 +165,7 @@ func (f *FileToUpload) Base64BuildChunk() (chan *FileToUploadChunk, error) {
 	out := make(chan *FileToUploadChunk, 8)
 	go func() {
 		b := make([]byte, ChunkBuffSize)
+		//goland:noinspection GoUnhandledErrorResult
 		defer fh.Close()
 		defer close(out)
 		ok := false

@@ -1,5 +1,5 @@
 /*
-Tree builder and viewer
+Package tree builder and viewer
 
 This allows you to create a tree of files and display them as a tree or flat view.
 
@@ -32,9 +32,7 @@ type Tree interface {
 	TreeView() chan string
 }
 
-/*
-Create a new tree
-*/
+// New create a new tree
 func New() Tree {
 	return &node{
 		Name: ".",
@@ -73,7 +71,7 @@ func (t *node) Add(name string) Tree {
 }
 
 /*
-Add a path to your tree, separated with /
+AddPath add a path to your tree, separated with /
 
 	t.AddPath("a/b/c/d")
 */
@@ -85,9 +83,7 @@ func (t *node) AddPath(path string) Tree {
 	return n
 }
 
-/*
-Return a sorted list of children
-*/
+// Children return a sorted list of children
 func (t *node) Children() []*node {
 	children := make([]*node, len(t.Nodes))
 	i := 0
@@ -101,15 +97,13 @@ func (t *node) Children() []*node {
 	return children
 }
 
-/*
-Check if your node has a children
-*/
+// HasChildren Check if your node has a children
 func (t *node) HasChildren() bool {
 	return t.Nodes != nil
 }
 
 /*
-Return a flat view of your tree
+FlatView return a flat view of your tree
 
 	for v := range t.FlatView() {
 		fmt.Println(v)
@@ -138,7 +132,7 @@ func (t *node) FlatView() (out chan string) {
 }
 
 /*
-Return a tree view of your tree
+TreeView return a tree view of your tree
 
 	for v := range t.TreeView() {
 		fmt.Println(v)

@@ -31,6 +31,7 @@ func (p *Piwigo) VideoJSSync(imageId int) error {
 	if err != nil {
 		return err
 	}
+	//goland:noinspection GoUnhandledErrorResult
 	defer r.Body.Close()
 	return nil
 }

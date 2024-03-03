@@ -63,8 +63,10 @@ func (t Tags) Selector(exclude *regexp.Regexp, keepFilter bool, keepPreviousAnsw
 		tags[tag.Name] = tag
 	}
 
+	//goland:noinspection GoPreferNilSlice
 	previousAnswer := []string{}
 	return func() Tags {
+		//goland:noinspection GoPreferNilSlice
 		answer := []string{}
 
 		_ = survey.AskOne(&survey.MultiSelect{
