@@ -15,7 +15,7 @@ type ImageDetailsCommand struct {
 	Id int `short:"i" long:"id" description:"ID of the images" required:"true"`
 }
 
-func (c *ImageDetailsCommand) Execute(args []string) error {
+func (c *ImageDetailsCommand) Execute([]string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err

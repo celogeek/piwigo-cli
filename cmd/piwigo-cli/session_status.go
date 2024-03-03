@@ -10,7 +10,7 @@ import (
 type SessionStatusCommand struct {
 }
 
-func (c *SessionStatusCommand) Execute(args []string) error {
+func (c *SessionStatusCommand) Execute([]string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err

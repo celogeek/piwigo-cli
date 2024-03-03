@@ -24,7 +24,7 @@ type ImagesTagCommand struct {
 	KeepPreviousAnswer bool   `short:"K" long:"keep-previous-answer" description:"Preserve previous answer"`
 }
 
-func (c *ImagesTagCommand) Execute(args []string) error {
+func (c *ImagesTagCommand) Execute([]string) error {
 	if c.MaxImages < 0 || c.MaxImages > 100 {
 		return fmt.Errorf("maxImages should be between 1 and 100")
 	}

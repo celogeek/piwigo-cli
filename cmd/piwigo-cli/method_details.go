@@ -14,7 +14,7 @@ type MethodDetailsCommand struct {
 	MethodName string `short:"m" long:"method-name" description:"Method name to details"`
 }
 
-func (c *MethodDetailsCommand) Execute(args []string) error {
+func (c *MethodDetailsCommand) Execute([]string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err

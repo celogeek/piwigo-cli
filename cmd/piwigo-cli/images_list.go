@@ -30,7 +30,7 @@ type ImagesListResult struct {
 	} `json:"paging"`
 }
 
-func (c *ImagesListCommand) Execute(args []string) error {
+func (c *ImagesListCommand) Execute([]string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err

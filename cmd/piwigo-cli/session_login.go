@@ -12,7 +12,7 @@ type SessionLoginCommand struct {
 	Password string `short:"p" long:"password" description:"Password" required:"true"`
 }
 
-func (c *SessionLoginCommand) Execute(args []string) error {
+func (c *SessionLoginCommand) Execute([]string) error {
 	fmt.Printf("Login on %s...\n", c.Url)
 
 	p := piwigo.Piwigo{

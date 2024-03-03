@@ -13,7 +13,7 @@ type CategoriesListCommand struct {
 	Empty  bool   `short:"e" long:"empty" description:"Find empty album without any photo or sub album"`
 }
 
-func (c *CategoriesListCommand) Execute(args []string) error {
+func (c *CategoriesListCommand) Execute([]string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err

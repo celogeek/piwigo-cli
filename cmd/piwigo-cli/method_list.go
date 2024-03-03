@@ -57,7 +57,7 @@ type MethodDetails struct {
 	Parameters  MethodParams  `json:"params"`
 }
 
-func (c *MethodListCommand) Execute(args []string) error {
+func (c *MethodListCommand) Execute([]string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err

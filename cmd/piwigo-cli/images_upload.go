@@ -15,7 +15,7 @@ type ImagesUploadCommand struct {
 	CategoryId int    `short:"c" long:"category" description:"Category to upload the file"`
 }
 
-func (c *ImagesUploadCommand) Execute(args []string) error {
+func (c *ImagesUploadCommand) Execute([]string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err

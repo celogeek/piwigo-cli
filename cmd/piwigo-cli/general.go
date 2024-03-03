@@ -24,7 +24,7 @@ type Info struct {
 
 var getInfosCommand GetInfosCommand
 
-func (c *GetInfosCommand) Execute(args []string) error {
+func (c *GetInfosCommand) Execute([]string) error {
 	p := piwigo.Piwigo{}
 	if err := p.LoadConfig(); err != nil {
 		return err
