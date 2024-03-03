@@ -143,9 +143,9 @@ func (f *FileToUpload) Checked() bool {
 }
 
 var (
-	CHUNK_SIZE       int64 = 1 * 1024 * 1024
-	CHUNK_BUFF_SIZE  int64 = 32 * 1024
-	CHUNK_BUFF_COUNT       = CHUNK_SIZE / CHUNK_BUFF_SIZE
+	ChunkSize      int64 = 1 * 1024 * 1024
+	ChunkBuffSize  int64 = 32 * 1024
+	ChunkBuffCount       = ChunkSize / ChunkBuffSize
 )
 
 type FileToUploadChunk struct {
@@ -162,7 +162,7 @@ func (f *FileToUpload) Base64BuildChunk() (chan *FileToUploadChunk, error) {
 
 	out := make(chan *FileToUploadChunk, 8)
 	go func() {
-		b := make([]byte, CHUNK_BUFF_SIZE)
+		b := make([]byte, ChunkBuffSize)
 		defer fh.Close()
 		defer close(out)
 		ok := false
@@ -171,7 +171,7 @@ func (f *FileToUpload) Base64BuildChunk() (chan *FileToUploadChunk, error) {
 				Position: position,
 			}
 			b64 := base64.NewEncoder(base64.StdEncoding, &bf.Buffer)
-			for i := int64(0); i < CHUNK_BUFF_COUNT; i++ {
+			for i := int64(0); i < ChunkBuffCount; i++ {
 				n, _ := fh.Read(b)
 				if n == 0 {
 					ok = true
