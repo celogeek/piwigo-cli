@@ -1,20 +1,21 @@
 /*
-	Tree builder and viewer
+Tree builder and viewer
 
-	This allow you to create a tree of files and display them as a tree or flat view.
+This allows you to create a tree of files and display them as a tree or flat view.
 
-	Example
-		t := tree.New()
-		t.AddPath("a/b/c/d")
-		t.AddPath("a/b/e/f")
+Example
 
-		for v := range t.FlatView() {
-			fmt.Println(v)
-		}
+	t := tree.New()
+	t.AddPath("a/b/c/d")
+	t.AddPath("a/b/e/f")
 
-		for v := range t.TreeView() {
-			fmt.Println(v)
-		}
+	for v := range t.FlatView() {
+		fmt.Println(v)
+	}
+
+	for v := range t.TreeView() {
+		fmt.Println(v)
+	}
 */
 package tree
 
@@ -32,7 +33,7 @@ type Tree interface {
 }
 
 /*
-	Create a new tree
+Create a new tree
 */
 func New() Tree {
 	return &node{
@@ -46,18 +47,18 @@ type node struct {
 }
 
 /*
-	Add a node to your tree and return it
+Add a node to your tree and return it
 
-	You can chain it:
+You can chain it:
 
-		t.Add("a").Add("b").Add("c").Add("d")
+	t.Add("a").Add("b").Add("c").Add("d")
 
-	Or
+Or
 
-		c := t
-		for _, s := range strings.Split("a/b/c/d", "/") {
-			c = c.Add(s)
-		}
+	c := t
+	for _, s := range strings.Split("a/b/c/d", "/") {
+		c = c.Add(s)
+	}
 */
 func (t *node) Add(name string) Tree {
 	if t.Nodes == nil {
@@ -72,9 +73,9 @@ func (t *node) Add(name string) Tree {
 }
 
 /*
-	Add a path to your tree, separated with /
+Add a path to your tree, separated with /
 
-		t.AddPath("a/b/c/d")
+	t.AddPath("a/b/c/d")
 */
 func (t *node) AddPath(path string) Tree {
 	n := Tree(t)
@@ -85,7 +86,7 @@ func (t *node) AddPath(path string) Tree {
 }
 
 /*
-	Return a sorted list of children
+Return a sorted list of children
 */
 func (t *node) Children() []*node {
 	childs := make([]*node, len(t.Nodes))
@@ -101,18 +102,18 @@ func (t *node) Children() []*node {
 }
 
 /*
-	Check if your node has a children
+Check if your node has a children
 */
 func (t *node) HasChildren() bool {
 	return t.Nodes != nil
 }
 
 /*
-	Return a flat view of your tree
+Return a flat view of your tree
 
-		for v := range t.FlatView() {
-			fmt.Println(v)
-		}
+	for v := range t.FlatView() {
+		fmt.Println(v)
+	}
 */
 func (t *node) FlatView() (out chan string) {
 	out = make(chan string)
@@ -137,11 +138,11 @@ func (t *node) FlatView() (out chan string) {
 }
 
 /*
-	Return a tree view of your tree
+Return a tree view of your tree
 
-		for v := range t.TreeView() {
-			fmt.Println(v)
-		}
+	for v := range t.TreeView() {
+		fmt.Println(v)
+	}
 */
 func (t *node) TreeView() (out chan string) {
 	out = make(chan string)

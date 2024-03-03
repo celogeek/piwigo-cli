@@ -222,7 +222,7 @@ Retag the image you mark as "todo:todo-2006", 50 max at a time, by keeping the p
 $ piwigo-cli images tag -x ^todo -T todo:todo-2006 -m 50 -K
 ```
 
-It display in well on iTerm:
+It displays in well on iTerm:
 
 - image
 - some details with the previous tag
