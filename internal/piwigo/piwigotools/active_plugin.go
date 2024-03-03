@@ -26,18 +26,18 @@ func (uft *ActivePlugin) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (uft ActivePlugin) MarshalJSON() ([]byte, error) {
+func (uft ActivePlugin) keys() []string {
 	keys := make([]string, 0, len(uft))
 	for k := range uft {
 		keys = append(keys, k)
 	}
-	return json.Marshal(keys)
+	return keys
+}
+
+func (uft ActivePlugin) MarshalJSON() ([]byte, error) {
+	return json.Marshal(uft.keys())
 }
 
 func (uft ActivePlugin) String() string {
-	keys := make([]string, 0, len(uft))
-	for k := range uft {
-		keys = append(keys, k)
-	}
-	return strings.Join(keys, ",")
+	return strings.Join(uft.keys(), ",")
 }
