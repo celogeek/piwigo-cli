@@ -45,7 +45,7 @@ func (c TimeResult) toTime() time.Time {
 }
 
 func (c TimeResult) AgeAt(createdAt *TimeResult) string {
-	var year, month, day, hour, min, sec int
+	var year, month, day, hour, minutes, seconds int
 	a := c.toTime()
 	if a.IsZero() {
 		return ""
@@ -67,20 +67,20 @@ func (c TimeResult) AgeAt(createdAt *TimeResult) string {
 	h1, m1, s1 := a.Clock()
 	h2, m2, s2 := b.Clock()
 
-	year = int(y2 - y1)
+	year = y2 - y1
 	month = int(M2 - M1)
-	day = int(d2 - d1)
-	hour = int(h2 - h1)
-	min = int(m2 - m1)
-	sec = int(s2 - s1)
+	day = d2 - d1
+	hour = h2 - h1
+	minutes = m2 - m1
+	seconds = s2 - s1
 
 	// Normalize negative values
-	if sec < 0 {
-		sec += 60
-		min--
+	if seconds < 0 {
+		seconds += 60
+		minutes--
 	}
-	if min < 0 {
-		min += 60
+	if minutes < 0 {
+		minutes += 60
 		hour--
 	}
 	if hour < 0 {
