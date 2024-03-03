@@ -33,7 +33,7 @@ func (c *ImageDetailsCommand) Execute([]string) error {
 		return err
 	}
 
-	categories, err := p.Categories()
+	categories, err := p.CategoryFromId()
 	if err != nil {
 		return err
 	}
