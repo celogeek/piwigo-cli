@@ -89,16 +89,16 @@ func (t *node) AddPath(path string) Tree {
 Return a sorted list of children
 */
 func (t *node) Children() []*node {
-	childs := make([]*node, len(t.Nodes))
+	children := make([]*node, len(t.Nodes))
 	i := 0
 	for _, n := range t.Nodes {
-		childs[i] = n
+		children[i] = n
 		i++
 	}
-	sort.Slice(childs, func(i, j int) bool {
-		return childs[i].Name < childs[j].Name
+	sort.Slice(children, func(i, j int) bool {
+		return children[i].Name < children[j].Name
 	})
-	return childs
+	return children
 }
 
 /*

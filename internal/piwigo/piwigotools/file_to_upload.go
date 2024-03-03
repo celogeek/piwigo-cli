@@ -154,14 +154,14 @@ type FileToUploadChunk struct {
 	Buffer   bytes.Buffer
 }
 
-func (f *FileToUpload) Base64Chunker() (chan *FileToUploadChunk, error) {
+func (f *FileToUpload) Base64BuildChunk() (chan *FileToUploadChunk, error) {
 	fh, err := os.Open(*f.FullPath())
 	if err != nil {
 		return nil, err
 	}
 
 	out := make(chan *FileToUploadChunk, 8)
-	chunker := func() {
+	go func() {
 		b := make([]byte, CHUNK_BUFF_SIZE)
 		defer fh.Close()
 		defer close(out)
@@ -185,9 +185,7 @@ func (f *FileToUpload) Base64Chunker() (chan *FileToUploadChunk, error) {
 				out <- bf
 			}
 		}
-	}
-
-	go chunker()
+	}()
 
 	return out, nil
 }

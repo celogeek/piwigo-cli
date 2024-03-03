@@ -60,9 +60,9 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 		return
 	}
 	wg := &sync.WaitGroup{}
-	chunks, err := file.Base64Chunker()
+	chunks, err := file.Base64BuildChunk()
 	if err != nil {
-		stat.Error("Base64Chunker", *file.FullPath(), err)
+		stat.Error("Base64BuildChunk", *file.FullPath(), err)
 		return
 	}
 

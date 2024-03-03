@@ -230,7 +230,7 @@ It displays in well on iTerm:
 
 You can use "SPACE" for selection of a tag, "LEFT" to remove the current selection, type words to lookup.
 
-![visutag](https://user-images.githubusercontent.com/65178/151510534-1c029d2b-f3a4-4fef-a4ae-8d831077a387.jpg)
+![visualtag](https://user-images.githubusercontent.com/65178/151510534-1c029d2b-f3a4-4fef-a4ae-8d831077a387.jpg)
 
 
 ## License

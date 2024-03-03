@@ -63,9 +63,9 @@ func (s *FileToUploadStat) Add() {
 	s.mu.Unlock()
 }
 
-func (s *FileToUploadStat) Commit(filereaded int64) {
+func (s *FileToUploadStat) Commit(fileread int64) {
 	s.mu.Lock()
-	s.UploadedBytes += filereaded
+	s.UploadedBytes += fileread
 	s.Progress.Set64(s.UploadedBytes)
 	s.mu.Unlock()
 }
