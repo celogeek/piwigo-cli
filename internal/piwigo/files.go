@@ -2,8 +2,8 @@ package piwigo
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -161,7 +161,7 @@ func (p *Piwigo) ScanTree(
 		return
 	}
 
-	dirs, err := ioutil.ReadDir(rootPath)
+	dirs, err := os.ReadDir(rootPath)
 	if err != nil {
 		stat.Error("ScanTree Dir", rootPath, err)
 		return
