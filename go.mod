@@ -4,7 +4,9 @@ go 1.22
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
+	github.com/apoorvam/goterminal v0.0.0-20180523175556-614d345c47e5
 	github.com/barasher/go-exiftool v1.10.0
+	github.com/daviddengcn/go-colortext v1.0.0
 	github.com/grokify/html-strip-tags-go v0.1.0
 	github.com/jedib0t/go-pretty/v6 v6.5.4
 	github.com/jessevdk/go-flags v1.5.0
