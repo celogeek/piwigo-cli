@@ -57,9 +57,6 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 			time.Sleep(time.Second) // wait 1 sec before retry
 		}
 
-		func() {
-
-		}()
 		req, err := http.NewRequest("POST", Url, strings.NewReader(encodedForm))
 		if err != nil {
 			return err
