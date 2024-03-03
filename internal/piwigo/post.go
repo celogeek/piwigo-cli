@@ -14,7 +14,7 @@ import (
 	"github.com/celogeek/piwigo-cli/internal/debug"
 )
 
-type PiwigoResult struct {
+type PostResult struct {
 	Stat       string      `json:"stat"`
 	Err        int         `json:"err"`
 	ErrMessage string      `json:"message"`
@@ -46,7 +46,7 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 		encodedForm = form.Encode()
 	}
 
-	Result := PiwigoResult{
+	result := PostResult{
 		Result: resp,
 	}
 
@@ -81,7 +81,7 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 			continue
 		}
 
-		err = json.Unmarshal(raw.Bytes(), &Result)
+		err = json.Unmarshal(raw.Bytes(), &result)
 		if err != nil {
 			_ = r.Body.Close()
 			continue
@@ -112,8 +112,8 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 		fmt.Println(debug.Dump(RawResult))
 	}
 
-	if Result.Stat != "ok" {
-		return fmt.Errorf("[Error %d] %s", Result.Err, Result.ErrMessage)
+	if result.Stat != "ok" {
+		return fmt.Errorf("[Error %d] %s", result.Err, result.ErrMessage)
 	}
 
 	return nil
