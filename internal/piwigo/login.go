@@ -23,19 +23,17 @@ func (p *Piwigo) GetStatus() (*StatusResponse, error) {
 
 	resp := &StatusResponse{}
 
-	err := p.Post("pwg.session.getStatus", nil, resp)
-	if err != nil {
+	if err := p.Post("pwg.session.getStatus", nil, resp); err != nil {
 		return nil, err
+	} else if resp.User != p.Username {
+		return nil, errors.New("you are a guest")
 	}
 
 	if err := p.Post("pwg.plugins.getList", nil, &resp.Plugins); err != nil {
 		return nil, err
 	}
 
-	if resp.User == p.Username {
-		return resp, nil
-	}
-	return nil, errors.New("you are a guest")
+	return resp, nil
 }
 
 func (p *Piwigo) Login() (*StatusResponse, error) {
