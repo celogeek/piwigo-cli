@@ -22,7 +22,7 @@ type FileToUploadStat struct {
 
 func NewFileToUploadStat() *FileToUploadStat {
 	bar := progressbar.DefaultBytes(1, "...")
-	progressbar.OptionOnCompletion(func() { os.Stderr.WriteString("\n") })(bar)
+	progressbar.OptionOnCompletion(func() { _, _ = os.Stderr.WriteString("\n") })(bar)
 	return &FileToUploadStat{
 		Progress: bar,
 	}
@@ -43,63 +43,70 @@ func (s *FileToUploadStat) Refresh() {
 
 func (s *FileToUploadStat) Check() {
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.Checked++
 	s.Refresh()
-	s.mu.Unlock()
 }
 
 func (s *FileToUploadStat) AddBytes(filesize int64) {
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.TotalBytes += filesize
 	s.Progress.ChangeMax64(s.TotalBytes + 1)
 	s.Refresh()
-	s.mu.Unlock()
 }
 
 func (s *FileToUploadStat) Add() {
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.Total++
 	s.Refresh()
-	s.mu.Unlock()
 }
 
 func (s *FileToUploadStat) Commit(fileread int64) {
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.UploadedBytes += fileread
-	s.Progress.Set64(s.UploadedBytes)
-	s.mu.Unlock()
+	_ = s.Progress.Set64(s.UploadedBytes)
 }
 
 func (s *FileToUploadStat) Done() {
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.Uploaded++
 	s.Refresh()
-	s.mu.Unlock()
 }
 
 func (s *FileToUploadStat) Close() {
-	s.Progress.Close()
+	_ = s.Progress.Close()
 }
 
 func (s *FileToUploadStat) Fail() {
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.Failed++
 	s.Refresh()
-	s.mu.Unlock()
 }
 
 func (s *FileToUploadStat) Skip() {
 	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	s.Skipped++
 	s.Refresh()
-	s.mu.Unlock()
 }
 
-func (s *FileToUploadStat) Error(origin string, filename string, err error) error {
+func (s *FileToUploadStat) Error(origin string, filename string, err error) {
 	s.mu.Lock()
-	s.Progress.Clear()
+	defer s.mu.Unlock()
+
+	_ = s.Progress.Clear()
 	fmt.Printf("[%s] %s: %s\n", origin, filename, err)
-	s.Progress.RenderBlank()
-	s.mu.Unlock()
-	return err
+	_ = s.Progress.RenderBlank()
 }
