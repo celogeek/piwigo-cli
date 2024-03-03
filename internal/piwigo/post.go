@@ -52,10 +52,14 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 
 	raw := bytes.NewBuffer([]byte{})
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if i > 0 {
 			time.Sleep(time.Second) // wait 1 sec before retry
 		}
+
+		func() {
+
+		}()
 		req, err := http.NewRequest("POST", Url, strings.NewReader(encodedForm))
 		if err != nil {
 			return err
@@ -70,15 +74,16 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 		if err != nil {
 			continue
 		}
-		defer r.Body.Close()
 
 		_, err = io.Copy(raw, r.Body)
 		if err != nil {
+			_ = r.Body.Close()
 			continue
 		}
 
 		err = json.Unmarshal(raw.Bytes(), &Result)
 		if err != nil {
+			_ = r.Body.Close()
 			continue
 		}
 
@@ -89,6 +94,7 @@ func (p *Piwigo) Post(method string, form *url.Values, resp interface{}) error {
 			}
 		}
 
+		_ = r.Body.Close()
 		break
 	}
 

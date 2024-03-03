@@ -68,7 +68,7 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 
 	ok := true
 	wg.Add(nbJobs)
-	for j := 0; j < nbJobs; j++ {
+	for range nbJobs {
 		go p.UploadChunk(file, chunks, wg, stat, &ok)
 	}
 	wg.Wait()
