@@ -55,5 +55,8 @@ func (c *GetInfosCommand) Execute(args []string) error {
 }
 
 func init() {
-	parser.AddCommand("getinfos", "Get general information", "", &getInfosCommand)
+	_, err := parser.AddCommand("getinfos", "Get general information", "", &getInfosCommand)
+	if err != nil {
+		panic(err)
+	}
 }

@@ -8,5 +8,8 @@ type SessionGroup struct {
 var sessionGroup SessionGroup
 
 func init() {
-	parser.AddCommand("session", "Session management", "", &sessionGroup)
+	_, err := parser.AddCommand("session", "Session management", "", &sessionGroup)
+	if err != nil {
+		panic(err)
+	}
 }

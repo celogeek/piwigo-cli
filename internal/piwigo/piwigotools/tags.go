@@ -67,7 +67,7 @@ func (t Tags) Selector(exclude *regexp.Regexp, keepFilter bool, keepPreviousAnsw
 	return func() Tags {
 		answer := []string{}
 
-		survey.AskOne(&survey.MultiSelect{
+		_ = survey.AskOne(&survey.MultiSelect{
 			Message:  "Tags:",
 			Options:  options,
 			PageSize: 20,

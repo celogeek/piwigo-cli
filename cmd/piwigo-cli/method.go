@@ -9,5 +9,8 @@ type MethodGroup struct {
 var methodGroup MethodGroup
 
 func init() {
-	parser.AddCommand("method", "Reflexion management", "", &methodGroup)
+	_, err := parser.AddCommand("method", "Reflexion management", "", &methodGroup)
+	if err != nil {
+		panic(err)
+	}
 }

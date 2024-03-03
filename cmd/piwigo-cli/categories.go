@@ -7,5 +7,8 @@ type CategoriesGroup struct {
 var categoriesGroup CategoriesGroup
 
 func init() {
-	parser.AddCommand("categories", "Categories management", "", &categoriesGroup)
+	_, err := parser.AddCommand("categories", "Categories management", "", &categoriesGroup)
+	if err != nil {
+		panic(err)
+	}
 }

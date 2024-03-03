@@ -64,7 +64,7 @@ func (c *ImagesListCommand) Execute(args []string) error {
 
 	bar := progressbar.Default(1, "listing")
 	progressbar.OptionOnCompletion(func() {
-		os.Stderr.WriteString("\n")
+		_, _ = os.Stderr.WriteString("\n")
 	})(bar)
 	for page := 0; ; page++ {
 		var resp ImagesListResult
@@ -95,14 +95,14 @@ func (c *ImagesListCommand) Execute(args []string) error {
 				}
 				rootTree.AddPath(filename)
 			}
-			bar.Add(1)
+			_ = bar.Add(1)
 		}
 
 		if resp.Paging.Count < resp.Paging.PerPage {
 			break
 		}
 	}
-	bar.Close()
+	_ = bar.Close()
 
 	var results chan string
 	if c.Tree {

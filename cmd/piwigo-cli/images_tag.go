@@ -134,7 +134,7 @@ func (c *ImagesTagCommand) Execute(args []string) error {
 
 			if len(sel) == 0 {
 				exit := false
-				survey.AskOne(&survey.Confirm{
+				_ = survey.AskOne(&survey.Confirm{
 					Message: "Selection is empty, exit:",
 					Default: false,
 				}, &exit)
@@ -144,7 +144,7 @@ func (c *ImagesTagCommand) Execute(args []string) error {
 			}
 
 			confirmSel := false
-			survey.AskOne(&survey.Confirm{
+			_ = survey.AskOne(&survey.Confirm{
 				Message: "Confirm:",
 				Default: true,
 			}, &confirmSel)

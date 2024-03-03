@@ -178,9 +178,9 @@ func (f *FileToUpload) Base64BuildChunk() (chan *FileToUploadChunk, error) {
 					break
 				}
 				bf.Size += int64(n)
-				b64.Write(b[:n])
+				_, _ = b64.Write(b[:n])
 			}
-			b64.Close()
+			_ = b64.Close()
 			if bf.Size > 0 {
 				out <- bf
 			}

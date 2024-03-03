@@ -106,7 +106,9 @@ func (p *Piwigo) Upload(file *piwigotools.FileToUpload, stat *piwigotools.FileTo
 	if hasVideoJS {
 		switch *file.Ext() {
 		case "ogg", "ogv", "mp4", "m4v", "webm", "webmv":
-			p.VideoJSSync(resp.ImageId)
+			if err := p.VideoJSSync(resp.ImageId); err != nil {
+				stat.Error("VideoJSSync", *file.FullPath(), err)
+			}
 		}
 	}
 

@@ -11,5 +11,8 @@ type ImagesGroup struct {
 var imagesGroup ImagesGroup
 
 func init() {
-	parser.AddCommand("images", "Images management", "", &imagesGroup)
+	_, err := parser.AddCommand("images", "Images management", "", &imagesGroup)
+	if err != nil {
+		panic(err)
+	}
 }
