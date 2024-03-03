@@ -50,7 +50,7 @@ func ArgsToForm(args []string) (*url.Values, error) {
 		if len(r) != 2 {
 			return nil, errors.New("args should be key=value")
 		}
-		params.Add(r[0], strings.ReplaceAll(r[1], "'", `\'`))
+		params.Add(r[0], r[1])
 	}
 	return params, nil
 }

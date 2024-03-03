@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/celogeek/piwigo-cli/internal/piwigo/piwigotools"
@@ -176,7 +175,7 @@ func (p *Piwigo) ScanTree(
 				category = &piwigotools.Category{}
 				p.mu.Lock()
 				err = p.Post("pwg.categories.add", &url.Values{
-					"name":   []string{strings.ReplaceAll(dirname, "'", `\'`)},
+					"name":   []string{dirname},
 					"parent": []string{fmt.Sprint(parentCategoryId)},
 				}, &category)
 				p.mu.Unlock()
